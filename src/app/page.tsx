@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import Teaser from "@/components/Teaser";
 
 export default function Home() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   return (
@@ -13,7 +13,7 @@ export default function Home() {
       <main className="flex flex-1 flex-col items-center px-5 py-14 sm:py-20">
         <header className="mb-10 flex w-full max-w-2xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/assemble-mark.png" alt="" className="h-6 w-6" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="var(--fg)"/></svg>
             <span className="text-sm font-semibold tracking-tight">Assemble</span>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5">
@@ -75,7 +75,7 @@ export default function Home() {
 
       {/* Sidebar — Plan status */}
       {sidebarOpen && (
-        <aside className="hidden lg:flex w-[280px] flex-col border-l border-[var(--border)] bg-[var(--card)] px-5 py-8 relative">
+        <aside className="fixed right-4 top-16 z-40 w-[280px] rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-6 shadow-lg">
           {/* Close button */}
           <button
             onClick={() => setSidebarOpen(false)}
@@ -86,7 +86,7 @@ export default function Home() {
           </button>
 
           {/* Connected badge */}
-          <div className="mb-6">
+          <div className="mb-5">
             <div className="flex items-center gap-2 mb-1">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--good)] opacity-75" />
@@ -103,9 +103,9 @@ export default function Home() {
           </div>
 
           {/* Current plan features */}
-          <div className="mb-6">
-            <p className="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-3">Your plan includes</p>
-            <ul className="space-y-2">
+          <div className="mb-5">
+            <p className="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-2">Your plan includes</p>
+            <ul className="space-y-1.5">
               <PlanFeature active label="1 idea at a time" />
               <PlanFeature active label="3 profile matches" />
               <PlanFeature active label="Outreach to 1 profile" />
@@ -113,67 +113,52 @@ export default function Home() {
             </ul>
           </div>
 
-          <div className="h-px bg-[var(--border)] my-4" />
+          <div className="h-px bg-[var(--border)] my-3" />
 
           {/* Upgrade CTA */}
-          <div className="flex-1">
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center rounded-md bg-[var(--fg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--bg)]">
-                  Business
-                </span>
-                <span className="text-xs text-[var(--muted)]">Upgrade</span>
-              </div>
-              <p className="text-sm font-semibold mb-2">Unlock full power</p>
-              <ul className="space-y-1.5 mb-4">
-                <PlanFeature upcoming label="Unlimited ideas" />
-                <PlanFeature upcoming label="5 profile suggestions" />
-                <PlanFeature upcoming label="Outreach to 3 profiles" />
-                <PlanFeature upcoming label="Priority matching" />
-              </ul>
-              <button
-                onClick={async () => {
-                  setUpgradeLoading(true);
-                  try {
-                    const res = await fetch("/api/dodo-checkout", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ returnUrl: window.location.href }),
-                    });
-                    const data = await res.json();
-                    if (data.url) {
-                      window.open(data.url, "_blank");
-                    } else {
-                      alert("Dodo checkout is not configured yet. This is a demo feature.");
-                    }
-                  } catch {
-                    alert("Could not create checkout session. Please try again.");
-                  } finally {
-                    setUpgradeLoading(false);
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center rounded-md bg-[var(--fg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--bg)]">
+                Business
+              </span>
+              <span className="text-xs text-[var(--muted)]">Upgrade</span>
+            </div>
+            <p className="text-sm font-semibold mb-2">Unlock full power</p>
+            <ul className="space-y-1.5 mb-4">
+              <PlanFeature upcoming label="Unlimited ideas" />
+              <PlanFeature upcoming label="5 profile suggestions" />
+              <PlanFeature upcoming label="Outreach to 3 profiles" />
+              <PlanFeature upcoming label="Priority matching" />
+            </ul>
+            <button
+              onClick={async () => {
+                setUpgradeLoading(true);
+                try {
+                  const res = await fetch("/api/dodo-checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ returnUrl: window.location.href }),
+                  });
+                  const data = await res.json();
+                  if (data.url) {
+                    window.open(data.url, "_blank");
+                  } else {
+                    alert("Dodo checkout is not configured yet. This is a demo feature.");
                   }
-                }}
-                disabled={upgradeLoading}
-                className="block w-full rounded-lg bg-[var(--fg)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--bg)] border-none cursor-pointer transition-all hover:opacity-90 hover:translate-y-[-1px] disabled:opacity-60"
-              >
-                {upgradeLoading ? "Creating checkout…" : "Upgrade to Business →"}
-              </button>
-              <p className="mt-2 text-center text-[10px] text-[var(--muted)]">
-                Powered by Dodo Payments
-              </p>
-            </div>
-          </div>
-
-          {/* User info */}
-          <div className="mt-auto pt-6 border-t border-[var(--border)]">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-[var(--fg)] flex items-center justify-center text-[10px] font-bold text-[var(--bg)]">
-                AB
-              </div>
-              <div>
-                <p className="text-xs font-semibold">Abdelmouhaimen</p>
-                <p className="text-[10px] text-[var(--muted)]">Pro member</p>
-              </div>
-            </div>
+                } catch {
+                  alert("Could not create checkout session. Please try again.");
+                } finally {
+                  setUpgradeLoading(false);
+                }
+              }}
+              disabled={upgradeLoading}
+              className="block w-full rounded-lg bg-[var(--fg)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--bg)] border-none cursor-pointer transition-all hover:opacity-90 hover:translate-y-[-1px] disabled:opacity-60"
+            >
+              {upgradeLoading ? "Creating checkout…" : "Upgrade to Business →"}
+            </button>
+            <p className="mt-2 text-center text-[10px] text-[var(--muted)]">
+              Powered by Dodo Payments
+            </p>
           </div>
         </aside>
       )}
