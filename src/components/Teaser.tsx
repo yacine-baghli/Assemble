@@ -138,7 +138,7 @@ export default function Teaser() {
             </div>
           </div>
 
-          {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
           {stage === "idea" && (
             <div className="mt-5">
@@ -169,7 +169,7 @@ export default function Teaser() {
       {stage === "preview" && result && (
         <div className="fade-up space-y-6">
           <Preview result={result} onSelect={onSelectCandidate} />
-          {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>
       )}
 
@@ -208,7 +208,7 @@ export default function Teaser() {
 
             <div className="mt-6 card p-5 text-left max-w-md mx-auto">
               <div className="flex items-center gap-3 mb-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-sm font-bold">
+                <div className="h-10 w-10 rounded-full bg-[var(--fg)] flex items-center justify-center text-sm font-bold text-[var(--bg)]">
                   {selectedCandidate.name.split(" ").map(n => n[0]).join("")}
                 </div>
                 <div>
@@ -250,7 +250,7 @@ export default function Teaser() {
               setResult(null);
               setStage("idea");
             }}
-            className="mx-auto block text-sm text-[var(--accent-2)] hover:underline"
+            className="mx-auto block text-sm text-[var(--muted)] hover:text-[var(--fg)] hover:underline"
           >
             ← Try another idea
           </button>
@@ -359,7 +359,7 @@ function LoadingStepFit({ result, idea }: { result: TeaserResult | null; idea: s
       <div className="grid gap-2 sm:grid-cols-3">
         {(candidates.length > 0 ? candidates : [{name: "Candidate 1"}, {name: "Candidate 2"}, {name: "Candidate 3"}] as PreviewCandidate[]).map((c, i) => (
           <div key={i} className="card p-3 text-center" style={{ animation: `fadeIn 0.5s ease ${i * 0.3}s both` }}>
-            <div className="text-2xl font-bold gradient-text" style={{ animation: `countUp 1s ease ${i * 0.3 + 0.5}s both` }}>
+            <div className="text-2xl font-bold" style={{ animation: `countUp 1s ease ${i * 0.3 + 0.5}s both` }}>
               {computeFitScore(c.name, idea, i)}%
             </div>
             <p className="text-xs text-[var(--muted)] mt-1 truncate">{c.name}</p>
@@ -433,17 +433,17 @@ function Preview({
               <button
                 key={i}
                 onClick={() => onSelect(c)}
-                className="card relative overflow-hidden p-4 text-left transition-all duration-200 hover:border-[var(--accent)] hover:shadow-[0_0_20px_rgba(124,92,255,0.2)] hover:scale-[1.02] cursor-pointer group"
+                className="card relative overflow-hidden p-4 text-left transition-all duration-200 hover:border-[var(--fg)]/30 hover:shadow-md hover:scale-[1.02] cursor-pointer group"
               >
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-[10px] font-bold">
+                  <div className="h-8 w-8 rounded-full bg-[var(--fg)] flex items-center justify-center text-[10px] font-bold text-[var(--bg)]">
                     {c.name.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-semibold">{c.name}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold gradient-text">{fitScore}%</div>
+                    <div className="text-sm font-bold">{fitScore}%</div>
                     <div className="text-[9px] text-[var(--good)]">fit score</div>
                   </div>
                 </div>

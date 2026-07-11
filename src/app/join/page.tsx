@@ -46,7 +46,7 @@ function JoinInner() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl px-5 py-12">
       <header className="mb-8 flex items-center justify-center gap-2">
-        <div className="h-6 w-6 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)]" />
+        <div className="h-6 w-6 rounded-md bg-[var(--fg)]" />
         <span className="text-sm font-semibold tracking-tight">Assemble</span>
       </header>
 
@@ -62,7 +62,7 @@ function JoinInner() {
       ) : (
         <div className="fade-up space-y-6">
           <div className="text-center">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/5 px-3 py-1 text-xs text-[var(--muted)]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-[var(--muted)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--good)]" />
               You&apos;ve been matched
             </div>
@@ -78,7 +78,7 @@ function JoinInner() {
 
           {why && (
             <div className="card p-4">
-              <p className="text-xs uppercase tracking-wider text-[var(--accent-2)]">
+              <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
                 Why you
               </p>
               <p className="mt-1 text-sm leading-relaxed">{why}</p>
@@ -90,7 +90,7 @@ function JoinInner() {
               <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
                 Your profile
               </p>
-              <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-[var(--good)]">
+              <span className="rounded-full bg-[var(--bg-2)] px-2 py-0.5 text-[10px] text-[var(--good)]">
                 ✓ auto-filled from your public profile
               </span>
             </div>

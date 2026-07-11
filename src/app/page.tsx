@@ -13,7 +13,7 @@ export default function Home() {
       <main className="flex flex-1 flex-col items-center px-5 py-14 sm:py-20">
         <header className="mb-10 flex w-full max-w-2xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)]" />
+            <img src="/assemble-mark.png" alt="" className="h-6 w-6" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             <span className="text-sm font-semibold tracking-tight">Assemble</span>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5">
@@ -22,7 +22,7 @@ export default function Home() {
               <span className="inline-flex h-2 w-2 rounded-full bg-[var(--good)]" />
             </span>
             <span className="text-xs text-[var(--muted)]">Connected as</span>
-            <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-[8px] font-bold">
+            <div className="h-5 w-5 rounded-full bg-[var(--fg)] flex items-center justify-center text-[8px] font-bold text-[var(--bg)]">
               AB
             </div>
             <span className="text-xs font-semibold">Abdelmouhaimen</span>
@@ -30,11 +30,11 @@ export default function Home() {
         </header>
 
         <section className="mb-10 max-w-2xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/5 px-3 py-1 text-xs text-[var(--muted)]">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-[var(--muted)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--good)]" />
             AI that builds your founding team
           </div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl" style={{ fontFamily: 'var(--serif)' }}>
             Turn an idea into a{" "}
             <span className="gradient-text">founding team</span>.
           </h1>
@@ -61,13 +61,13 @@ export default function Home() {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-medium shadow-lg transition-all hover:border-[var(--accent)] hover:shadow-[0_4px_16px_rgba(124,92,255,0.3)]"
+          className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-medium shadow-md transition-all hover:shadow-lg"
         >
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--good)] opacity-75" />
             <span className="inline-flex h-2 w-2 rounded-full bg-[var(--good)]" />
           </span>
-          <span className="inline-flex items-center rounded bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+          <span className="inline-flex items-center rounded bg-[var(--fg)] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[var(--bg)]">
             Pro
           </span>
         </button>
@@ -75,11 +75,11 @@ export default function Home() {
 
       {/* Sidebar — Plan status */}
       {sidebarOpen && (
-        <aside className="hidden lg:flex w-[280px] flex-col border-l border-[var(--border)] bg-[var(--bg-2)]/60 px-5 py-8 backdrop-blur-sm relative">
+        <aside className="hidden lg:flex w-[280px] flex-col border-l border-[var(--border)] bg-[var(--card)] px-5 py-8 relative">
           {/* Close button */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--muted)] transition-colors hover:text-[var(--fg)] hover:border-[var(--accent)]"
+            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] transition-colors hover:text-[var(--fg)] hover:border-[var(--fg)]"
             aria-label="Close sidebar"
           >
             ✕
@@ -95,7 +95,7 @@ export default function Home() {
               <span className="text-xs font-medium text-[var(--good)]">Connected</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-md bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+              <span className="inline-flex items-center rounded-md bg-[var(--fg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--bg)]">
                 Pro
               </span>
               <span className="text-sm font-semibold">Plan</span>
@@ -117,9 +117,9 @@ export default function Home() {
 
           {/* Upgrade CTA */}
           <div className="flex-1">
-            <div className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center rounded-md bg-gradient-to-r from-amber-500 to-orange-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                <span className="inline-flex items-center rounded-md bg-[var(--fg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--bg)]">
                   Business
                 </span>
                 <span className="text-xs text-[var(--muted)]">Upgrade</span>
@@ -153,7 +153,7 @@ export default function Home() {
                   }
                 }}
                 disabled={upgradeLoading}
-                className="block w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-center text-sm font-semibold text-white border-none cursor-pointer transition-all hover:shadow-[0_8px_24px_-6px_rgba(245,158,11,0.5)] hover:translate-y-[-1px] disabled:opacity-60"
+                className="block w-full rounded-lg bg-[var(--fg)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--bg)] border-none cursor-pointer transition-all hover:opacity-90 hover:translate-y-[-1px] disabled:opacity-60"
               >
                 {upgradeLoading ? "Creating checkout…" : "Upgrade to Business →"}
               </button>
@@ -166,7 +166,7 @@ export default function Home() {
           {/* User info */}
           <div className="mt-auto pt-6 border-t border-[var(--border)]">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-[10px] font-bold">
+              <div className="h-8 w-8 rounded-full bg-[var(--fg)] flex items-center justify-center text-[10px] font-bold text-[var(--bg)]">
                 AB
               </div>
               <div>
@@ -184,7 +184,7 @@ export default function Home() {
 function Step({ n, label }: { n: string; label: string }) {
   return (
     <div className="card px-2 py-3">
-      <div className="mx-auto mb-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] text-[var(--accent-2)]">
+      <div className="mx-auto mb-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted)] text-xs font-semibold">
         {n}
       </div>
       {label}
@@ -196,10 +196,8 @@ function PlanFeature({ label, active, upcoming }: { label: string; active?: bool
   return (
     <li className="flex items-center gap-2 text-xs">
       {active && <span className="text-[var(--good)]">✓</span>}
-      {upcoming && <span className="text-amber-400">+</span>}
+      {upcoming && <span className="text-[var(--muted)]">+</span>}
       <span className={active ? "text-[var(--fg)]" : "text-[var(--muted)]"}>{label}</span>
     </li>
   );
 }
-
-
