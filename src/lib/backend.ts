@@ -102,6 +102,48 @@ export async function runPipeline(
   return (await res.json()) as PipelineResult;
 }
 
+// ── Observability (Phase 5) ──────────────────────────────────────────
+export type AgentRun = {
+  _id: string;
+  label: string;
+  status: string;
+  startedAt: number;
+  endedAt?: number;
+  totalTokens: number;
+  totalCostUsd: number;
+};
+
+export type AgentStep = {
+  _id: string;
+  runId: string;
+  parentStepId?: string;
+  agent: string;
+  input: string;
+  output: string;
+  tokens: number;
+  costUsd: number;
+  latencyMs: number;
+  status?: string;
+  createdAt: number;
+};
+
+export async function listRuns(): Promise<AgentRun[]> {
+  if (!convexEnabled) return [];
+  const ref = makeFunctionReference<"query">("observability:listRuns");
+  return (await getClient().query(ref, {})) as AgentRun[];
+}
+
+export async function getRun(
+  runId: string,
+): Promise<{ run: AgentRun; steps: AgentStep[] } | null> {
+  if (!convexEnabled) return null;
+  const ref = makeFunctionReference<"query">("observability:getRun");
+  return (await getClient().query(ref, { runId })) as {
+    run: AgentRun;
+    steps: AgentStep[];
+  } | null;
+}
+
 export async function captureEmail(args: {
   email: string;
   projectId?: string;
