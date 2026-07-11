@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { action, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 import {
   buildStrategyUserPrompt,
   coerceStrategyResult,
@@ -43,9 +44,10 @@ export const runTeaserPreview = action({
     const idea = args.idea.trim().slice(0, 2000);
     if (idea.length < 3) throw new Error("Idea is too short");
 
-    const runId = await ctx.runMutation(internal.observability.startRun, {
-      label: "teaser:strategy-light",
-    });
+    const runId: Id<"agent_runs"> = await ctx.runMutation(
+      internal.observability.startRun,
+      { label: "teaser:strategy-light" },
+    );
 
     const demoMode = !hasOpenAI();
     let result: StrategyResult;
@@ -90,7 +92,9 @@ export const runTeaserPreview = action({
       status,
     });
 
-    const projectId = await ctx.runMutation(internal.strategy.persistTeaserProject, {
+    const projectId: Id<"projects"> = await ctx.runMutation(
+      internal.strategy.persistTeaserProject,
+      {
       ideaText: idea,
       domains: result.domains,
       challenges: result.challenges,

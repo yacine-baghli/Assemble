@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 import { LinkupClient } from "linkup-sdk";
 import {
   buildStrategyUserPrompt,
@@ -54,15 +55,43 @@ async function linkupSearch(persona: Persona, domains: string[]): Promise<RawCan
     }));
 }
 
+type PublicCandidate = {
+  name: string;
+  headline: string;
+  location?: string;
+  whyMatch: string;
+  expertise: string[];
+  profileUrls: string[];
+  confidence: number;
+  isBestFit: boolean;
+  personaRole: string;
+  locked: boolean;
+};
+
+type PipelineActionResult = {
+  projectId: Id<"projects">;
+  demoMode: boolean;
+  runId: Id<"agent_runs">;
+  usedLinkup: boolean;
+  domains: string[];
+  missingExpertise: string[];
+  challenges: string[];
+  risks: string[];
+  clarifyingQuestions: string[];
+  personas: Persona[];
+  candidates: PublicCandidate[];
+};
+
 // Full agency pipeline: idea → strategy → parallel scouts → ranking → persist.
 // Returns the assembled bundle so the frontend needs no follow-up query.
+// Explicit return type breaks Convex's circular api/internal type inference.
 export const runFullPipeline = action({
   args: {
     idea: v.string(),
     revealBestFit: v.optional(v.boolean()),
     notes: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<PipelineActionResult> => {
     const idea = args.idea.trim().slice(0, 2000);
     if (idea.length < 8) throw new Error("Idea is too short");
 
@@ -72,14 +101,15 @@ export const runFullPipeline = action({
       ? `Founder preferences to respect (from memory): ${notes.join("; ")}\n\n`
       : "";
 
-    const runId = await ctx.runMutation(internal.observability.startRun, {
-      label: "app:full-pipeline",
-    });
+    const runId: Id<"agent_runs"> = await ctx.runMutation(
+      internal.observability.startRun,
+      { label: "app:full-pipeline" },
+    );
     const demoMode = !hasOpenAI();
 
     // ── 1. Strategy (manager) ────────────────────────────────────────
     let strategy: StrategyResult;
-    let strategyStepId;
+    let strategyStepId: Id<"agent_steps"> | undefined;
     {
       let output = "";
       let tokens = 0;
@@ -123,7 +153,8 @@ export const runFullPipeline = action({
     const personas = strategy.personas.slice(0, 4);
 
     // Persist project + personas now (so ids exist for candidates).
-    const { projectId } = await ctx.runMutation(internal.pipeline.persistProject, {
+    const { projectId }: { projectId: Id<"projects">; roleToId: Record<string, Id<"personas">> } =
+      await ctx.runMutation(internal.pipeline.persistProject, {
       ideaText: idea,
       domains: strategy.domains,
       challenges: strategy.challenges,

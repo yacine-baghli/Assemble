@@ -183,6 +183,7 @@ export const getProjectResult = query({
       .query("candidates")
       .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .collect();
+    const roleById = new Map(personas.map((p) => [p._id, p.role]));
     const publicCandidates = candidates
       .sort((a, b) => b.confidence - a.confidence)
       .map((c) => ({
@@ -194,7 +195,7 @@ export const getProjectResult = query({
         profileUrls: c.gated ? [] : c.profileUrls,
         confidence: c.confidence,
         isBestFit: c.isBestFit,
-        personaRole: c.personaRole,
+        personaRole: (c.personaId && roleById.get(c.personaId)) || "",
         locked: c.gated,
       }));
     return {
