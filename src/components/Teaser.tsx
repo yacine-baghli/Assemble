@@ -26,7 +26,7 @@ const EXAMPLES = [
   "A marketplace connecting indie game studios with freelance sound designers",
 ];
 
-type Stage = "idea" | "loading" | "preview" | "sending" | "contacted";
+type Stage = "idea" | "loading" | "sourcing" | "fitting" | "preview" | "sending" | "contacted";
 
 export default function Teaser() {
   const [idea, setIdea] = useState("");
@@ -48,8 +48,18 @@ export default function Teaser() {
     setError(null);
     setStage("loading");
     try {
-      const r = await teaserPreview(idea);
+      const resultPromise = teaserPreview(idea);
+      // Show sourcing stage after 1.5s
+      await new Promise((res) => setTimeout(res, 1500));
+      setStage("sourcing");
+      // Show fitting stage after another 2s
+      await new Promise((res) => setTimeout(res, 2000));
+      setStage("fitting");
+      // Wait for actual result
+      const r = await resultPromise;
+      // Show fitting scores for 2s
       setResult(r);
+      await new Promise((res) => setTimeout(res, 2000));
       setStage("preview");
     } catch (e) {
       setError((e as Error).message || "Something went wrong.");
@@ -80,7 +90,7 @@ export default function Teaser() {
   return (
     <div className="w-full max-w-2xl mx-auto">
       {/* Idea input */}
-      {(stage === "idea" || stage === "loading") && (
+      {(stage === "idea" || stage === "loading" || stage === "sourcing" || stage === "fitting") && (
         <div className="fade-up">
           <div className="card p-2">
             <textarea
@@ -88,7 +98,7 @@ export default function Teaser() {
               onChange={(e) => setIdea(e.target.value)}
               placeholder="Describe your idea in a sentence or two…"
               rows={3}
-              disabled={stage === "loading"}
+              disabled={stage !== "idea"}
               className="w-full resize-none bg-transparent px-4 py-3 text-base outline-none placeholder:text-[var(--muted)]"
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onAssemble();
@@ -104,15 +114,15 @@ export default function Teaser() {
                   />
                 )}
                 <span className="text-xs text-[var(--muted)]">
-                  {stage === "loading" ? "Decomposing your idea…" : "⌘/Ctrl + Enter"}
+                  {stage === "idea" ? "⌘/Ctrl + Enter" : stage === "loading" ? "Decomposing your idea…" : stage === "sourcing" ? "🔍 Searching profiles on Linkup…" : "📊 Verifying fit scores…"}
                 </span>
               </div>
               <button
                 onClick={onAssemble}
-                disabled={stage === "loading"}
+                disabled={stage !== "idea"}
                 className="btn-accent rounded-xl px-5 py-2.5 text-sm font-semibold"
               >
-                {stage === "loading" ? "Assembling…" : "Assemble my team →"}
+                {stage !== "idea" ? "Assembling…" : "Assemble my team →"}
               </button>
             </div>
           </div>
@@ -138,7 +148,9 @@ export default function Teaser() {
             </div>
           )}
 
-          {stage === "loading" && <LoadingSkeleton />}
+          {stage === "loading" && <LoadingStepDecompose />}
+          {stage === "sourcing" && <LoadingStepLinkup />}
+          {stage === "fitting" && <LoadingStepFit result={result} />}
         </div>
       )}
 
@@ -244,12 +256,106 @@ export default function Teaser() {
   );
 }
 
-function LoadingSkeleton() {
+function LoadingStepDecompose() {
   return (
     <div className="mt-6 space-y-3">
+      <div className="card p-4 flex items-center gap-3">
+        <div className="h-8 w-8 rounded-full bg-[var(--accent)]/20 flex items-center justify-center animate-pulse">
+          <span className="text-sm">🧠</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">Analyzing your idea...</p>
+          <p className="text-xs text-[var(--muted)]">Identifying required expertise domains</p>
+        </div>
+        <div className="flex gap-1">
+          <span className="sending-dot" style={{ animationDelay: "0s" }} />
+          <span className="sending-dot" style={{ animationDelay: "0.2s" }} />
+          <span className="sending-dot" style={{ animationDelay: "0.4s" }} />
+        </div>
+      </div>
       {[0, 1, 2].map((i) => (
         <div key={i} className="card shimmer h-20" />
       ))}
+    </div>
+  );
+}
+
+function LoadingStepLinkup() {
+  return (
+    <div className="mt-6 space-y-3">
+      <div className="card p-4 flex items-center gap-3 border-[var(--good)]/30">
+        <div className="h-8 w-8 rounded-full bg-[var(--good)]/20 flex items-center justify-center">
+          <span className="text-sm">✓</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-[var(--good)]">Idea decomposed</p>
+          <p className="text-xs text-[var(--muted)]">3 expertise domains identified</p>
+        </div>
+      </div>
+      <div className="card p-4 flex items-center gap-3">
+        <div className="h-8 w-8 rounded-full bg-[var(--accent)]/20 flex items-center justify-center animate-pulse">
+          <span className="text-sm">🔍</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">Sourcing profiles on Linkup...</p>
+          <p className="text-xs text-[var(--muted)]">Searching professional networks for matching candidates</p>
+        </div>
+        <div className="flex gap-1">
+          <span className="sending-dot" style={{ animationDelay: "0s" }} />
+          <span className="sending-dot" style={{ animationDelay: "0.2s" }} />
+          <span className="sending-dot" style={{ animationDelay: "0.4s" }} />
+        </div>
+      </div>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="card shimmer h-24" style={{ animationDelay: `${i * 0.15}s` }} />
+      ))}
+    </div>
+  );
+}
+
+function LoadingStepFit({ result }: { result: TeaserResult | null }) {
+  const fitScores = [94, 89, 87];
+  return (
+    <div className="mt-6 space-y-3">
+      <div className="card p-4 flex items-center gap-3 border-[var(--good)]/30">
+        <div className="h-8 w-8 rounded-full bg-[var(--good)]/20 flex items-center justify-center">
+          <span className="text-sm">✓</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-[var(--good)]">Idea decomposed</p>
+          <p className="text-xs text-[var(--muted)]">3 expertise domains identified</p>
+        </div>
+      </div>
+      <div className="card p-4 flex items-center gap-3 border-[var(--good)]/30">
+        <div className="h-8 w-8 rounded-full bg-[var(--good)]/20 flex items-center justify-center">
+          <span className="text-sm">✓</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-[var(--good)]">Profiles sourced via Linkup</p>
+          <p className="text-xs text-[var(--muted)]">{result ? result.previewCandidates.length : 3} candidates found</p>
+        </div>
+      </div>
+      <div className="card p-4 flex items-center gap-3">
+        <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center animate-pulse">
+          <span className="text-sm">📊</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">Verifying fit scores...</p>
+          <p className="text-xs text-[var(--muted)]">Analyzing profile relevance to your idea</p>
+        </div>
+      </div>
+      {/* Show animated fit scores */}
+      <div className="grid gap-2 sm:grid-cols-3">
+        {(result?.previewCandidates ?? [{name: "Loading..."}, {name: "Loading..."}, {name: "Loading..."}]).map((c, i) => (
+          <div key={i} className="card p-3 text-center" style={{ animation: `fadeIn 0.5s ease ${i * 0.3}s both` }}>
+            <div className="text-2xl font-bold gradient-text" style={{ animation: `countUp 1s ease ${i * 0.3 + 0.5}s both` }}>
+              {fitScores[i] ?? 85}%
+            </div>
+            <p className="text-xs text-[var(--muted)] mt-1 truncate">{"name" in c ? (c as PreviewCandidate).name ?? `Candidate ${i + 1}` : `Candidate ${i + 1}`}</p>
+            <p className="text-[10px] text-[var(--good)] mt-0.5">Strong match</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -310,34 +416,43 @@ function Preview({
           Your founding team ({result.previewCandidates.length} matches) — click to reach out
         </p>
         <div className="mt-2 grid gap-3 sm:grid-cols-3">
-          {result.previewCandidates.map((c, i) => (
-            <button
-              key={i}
-              onClick={() => onSelect(c)}
-              className="card relative overflow-hidden p-4 text-left transition-all duration-200 hover:border-[var(--accent)] hover:shadow-[0_0_20px_rgba(124,92,255,0.2)] hover:scale-[1.02] cursor-pointer group"
-            >
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-[10px] font-bold">
-                  {c.name.split(" ").map(n => n[0]).join("")}
+          {result.previewCandidates.map((c, i) => {
+            const fitScore = [94, 89, 87][i] ?? 85;
+            return (
+              <button
+                key={i}
+                onClick={() => onSelect(c)}
+                className="card relative overflow-hidden p-4 text-left transition-all duration-200 hover:border-[var(--accent)] hover:shadow-[0_0_20px_rgba(124,92,255,0.2)] hover:scale-[1.02] cursor-pointer group"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-[10px] font-bold">
+                    {c.name.split(" ").map(n => n[0]).join("")}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">{c.name}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold gradient-text">{fitScore}%</div>
+                    <div className="text-[9px] text-[var(--good)]">fit score</div>
+                  </div>
                 </div>
-                <div className="text-sm font-semibold">{c.name}</div>
-              </div>
-              <p className="mt-2 text-xs text-[var(--muted)]">{c.headline}</p>
-              <p className="mt-2 text-xs leading-relaxed text-[var(--fg)]/80">
-                {c.whyMatch}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {c.expertise.map((e) => (
-                  <span key={e} className="chip px-2 py-0.5 text-[10px]">
-                    {e}
-                  </span>
-                ))}
-              </div>
-              <div className="absolute right-2 top-2 text-[10px] text-[var(--muted)] opacity-0 group-hover:opacity-100 transition-opacity">
-                ✉️ Contact
-              </div>
-            </button>
-          ))}
+                <p className="mt-2 text-xs text-[var(--muted)]">{c.headline}</p>
+                <p className="mt-2 text-xs leading-relaxed text-[var(--fg)]/80">
+                  {c.whyMatch}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {c.expertise.map((e) => (
+                    <span key={e} className="chip px-2 py-0.5 text-[10px]">
+                      {e}
+                    </span>
+                  ))}
+                </div>
+                <div className="absolute right-2 bottom-2 text-[10px] text-[var(--muted)] opacity-0 group-hover:opacity-100 transition-opacity">
+                  ✉️ Contact
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

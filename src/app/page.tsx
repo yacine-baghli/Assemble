@@ -12,9 +12,22 @@ export default function Home() {
     <div className="flex min-h-screen">
       {/* Main content */}
       <main className="flex flex-1 flex-col items-center px-5 py-14 sm:py-20">
-        <header className="mb-10 flex items-center gap-2">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)]" />
-          <span className="text-sm font-semibold tracking-tight">Assemble</span>
+        <header className="mb-10 flex w-full max-w-2xl items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)]" />
+            <span className="text-sm font-semibold tracking-tight">Assemble</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--good)] opacity-75" />
+              <span className="inline-flex h-2 w-2 rounded-full bg-[var(--good)]" />
+            </span>
+            <span className="text-xs text-[var(--muted)]">Connected as</span>
+            <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-[8px] font-bold">
+              AB
+            </div>
+            <span className="text-xs font-semibold">Abdelmouhaimen</span>
+          </div>
         </header>
 
         <section className="mb-10 max-w-2xl text-center">
