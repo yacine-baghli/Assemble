@@ -6,19 +6,31 @@
 //   • Demo mode    — no accounts needed. Thin Next route handlers run the same
 //     deterministic decomposition so the funnel works locally and offline.
 //
-// We reference Convex functions by name via makeFunctionReference so the app
+// We reference Convex functions by name (makeFunctionReference) so the app
 // compiles and ships even before `npx convex dev` has generated _generated/.
-
-import { ConvexHttpClient } from "convex/browser";
-import { makeFunctionReference } from "convex/server";
+//
+// The Convex client is loaded LAZILY (dynamic import) so its transitive `ws`
+// dependency — which imports node:https — never enters the SSR / Cloudflare
+// Worker bundle. These functions only ever run in the browser at call time.
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 export const convexEnabled = !!CONVEX_URL;
 
-let client: ConvexHttpClient | null = null;
-function getClient(): ConvexHttpClient {
+let client: import("convex/browser").ConvexHttpClient | null = null;
+
+async function convexCall<T>(
+  kind: "query" | "mutation" | "action",
+  name: string,
+  args: Record<string, unknown> = {},
+): Promise<T> {
+  const [{ ConvexHttpClient }, { makeFunctionReference }] = await Promise.all([
+    import("convex/browser"),
+    import("convex/server"),
+  ]);
   if (!client) client = new ConvexHttpClient(CONVEX_URL as string);
-  return client;
+  const ref = makeFunctionReference<typeof kind>(name);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (await (client as any)[kind](ref, args)) as T;
 }
 
 export type PreviewCandidate = {
@@ -40,8 +52,7 @@ export type TeaserResult = {
 
 export async function teaserPreview(idea: string): Promise<TeaserResult> {
   if (convexEnabled) {
-    const ref = makeFunctionReference<"action">("strategy:runTeaserPreview");
-    return (await getClient().action(ref, { idea })) as TeaserResult;
+    return convexCall<TeaserResult>("action", "strategy:runTeaserPreview", { idea });
   }
   const res = await fetch("/api/demo/strategy", {
     method: "POST",
@@ -91,12 +102,11 @@ export async function runPipeline(
   notes: string[] = [],
 ): Promise<PipelineResult> {
   if (convexEnabled) {
-    const ref = makeFunctionReference<"action">("scout:runFullPipeline");
-    return (await getClient().action(ref, {
+    return convexCall<PipelineResult>("action", "scout:runFullPipeline", {
       idea,
       revealBestFit,
       notes,
-    })) as PipelineResult;
+    });
   }
   const res = await fetch("/api/demo/pipeline", {
     method: "POST",
@@ -112,8 +122,9 @@ export async function loadProjectResult(
   projectId: string,
 ): Promise<PipelineResult | null> {
   if (!convexEnabled || projectId.startsWith("demo-")) return null;
-  const ref = makeFunctionReference<"query">("pipeline:getProjectResult");
-  return (await getClient().query(ref, { projectId })) as PipelineResult | null;
+  return convexCall<PipelineResult | null>("query", "pipeline:getProjectResult", {
+    projectId,
+  });
 }
 
 export async function createCheckout(
@@ -121,11 +132,11 @@ export async function createCheckout(
   returnUrl: string,
 ): Promise<{ url: string | null; reason?: string }> {
   if (!convexEnabled || projectId.startsWith("demo-")) return { url: null };
-  const ref = makeFunctionReference<"action">("payments:createCheckout");
-  return (await getClient().action(ref, { projectId, returnUrl })) as {
-    url: string | null;
-    reason?: string;
-  };
+  return convexCall<{ url: string | null; reason?: string }>(
+    "action",
+    "payments:createCheckout",
+    { projectId, returnUrl },
+  );
 }
 
 export async function unlockProject(
@@ -133,10 +144,10 @@ export async function unlockProject(
   simulated: boolean,
 ): Promise<{ ok: boolean }> {
   if (!convexEnabled || projectId.startsWith("demo-")) return { ok: false };
-  const ref = makeFunctionReference<"action">("payments:unlock");
-  return (await getClient().action(ref, { projectId, simulated })) as {
-    ok: boolean;
-  };
+  return convexCall<{ ok: boolean }>("action", "payments:unlock", {
+    projectId,
+    simulated,
+  });
 }
 
 // ── Voice (Phase 2) ──────────────────────────────────────────────────
@@ -161,8 +172,7 @@ const NO_CAPS: Capabilities = {
 export async function getCapabilities(): Promise<Capabilities> {
   if (!convexEnabled) return NO_CAPS;
   try {
-    const ref = makeFunctionReference<"query">("config:capabilities");
-    return (await getClient().query(ref, {})) as Capabilities;
+    return await convexCall<Capabilities>("query", "config:capabilities", {});
   } catch {
     return NO_CAPS;
   }
@@ -173,23 +183,21 @@ export async function transcribeAudio(
   mimeType: string,
 ): Promise<{ text: string; ok: boolean }> {
   if (!convexEnabled) return { text: "", ok: false };
-  const ref = makeFunctionReference<"action">("voice:transcribe");
-  return (await getClient().action(ref, { audioBase64, mimeType })) as {
-    text: string;
-    ok: boolean;
-  };
+  return convexCall<{ text: string; ok: boolean }>("action", "voice:transcribe", {
+    audioBase64,
+    mimeType,
+  });
 }
 
 export async function synthesizeSpeech(
   text: string,
 ): Promise<{ audioBase64: string; mime: string; ok: boolean }> {
   if (!convexEnabled) return { audioBase64: "", mime: "audio/mpeg", ok: false };
-  const ref = makeFunctionReference<"action">("voice:speak");
-  return (await getClient().action(ref, { text })) as {
-    audioBase64: string;
-    mime: string;
-    ok: boolean;
-  };
+  return convexCall<{ audioBase64: string; mime: string; ok: boolean }>(
+    "action",
+    "voice:speak",
+    { text },
+  );
 }
 
 // ── Outreach (Phase 3) ───────────────────────────────────────────────
@@ -210,8 +218,7 @@ export async function draftOutreach(
   context: OutreachContext,
 ): Promise<OutreachDraft> {
   if (convexEnabled) {
-    const ref = makeFunctionReference<"action">("outreach:draft");
-    return (await getClient().action(ref, { context })) as OutreachDraft;
+    return convexCall<OutreachDraft>("action", "outreach:draft", { context });
   }
   const res = await fetch("/api/demo/outreach/draft", {
     method: "POST",
@@ -229,12 +236,11 @@ export async function sendOutreachEmail(args: {
   fromName?: string;
 }): Promise<{ ok: boolean; reason?: string; id?: string }> {
   if (!convexEnabled) return { ok: false, reason: "no_backend" };
-  const ref = makeFunctionReference<"action">("outreach:sendEmail");
-  return (await getClient().action(ref, args)) as {
-    ok: boolean;
-    reason?: string;
-    id?: string;
-  };
+  return convexCall<{ ok: boolean; reason?: string; id?: string }>(
+    "action",
+    "outreach:sendEmail",
+    args,
+  );
 }
 
 // ── Observability (Phase 5) ──────────────────────────────────────────
@@ -264,19 +270,18 @@ export type AgentStep = {
 
 export async function listRuns(): Promise<AgentRun[]> {
   if (!convexEnabled) return [];
-  const ref = makeFunctionReference<"query">("observability:listRuns");
-  return (await getClient().query(ref, {})) as AgentRun[];
+  return convexCall<AgentRun[]>("query", "observability:listRuns", {});
 }
 
 export async function getRun(
   runId: string,
 ): Promise<{ run: AgentRun; steps: AgentStep[] } | null> {
   if (!convexEnabled) return null;
-  const ref = makeFunctionReference<"query">("observability:getRun");
-  return (await getClient().query(ref, { runId })) as {
-    run: AgentRun;
-    steps: AgentStep[];
-  } | null;
+  return convexCall<{ run: AgentRun; steps: AgentStep[] } | null>(
+    "query",
+    "observability:getRun",
+    { runId },
+  );
 }
 
 export async function captureEmail(args: {
@@ -285,13 +290,12 @@ export async function captureEmail(args: {
   source?: string;
 }): Promise<{ isNew: boolean }> {
   if (convexEnabled) {
-    const ref = makeFunctionReference<"mutation">("leads:capture");
     const projectId = args.projectId?.startsWith("demo-") ? undefined : args.projectId;
-    return (await getClient().mutation(ref, {
+    return convexCall<{ isNew: boolean }>("mutation", "leads:capture", {
       email: args.email,
       projectId,
       source: args.source,
-    })) as { isNew: boolean };
+    });
   }
   const res = await fetch("/api/demo/lead", {
     method: "POST",
