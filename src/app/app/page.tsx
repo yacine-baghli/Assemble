@@ -370,7 +370,12 @@ function Results({
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {cands.map((c, i) => (
-                <CandidateCard key={i} c={c} onOutreach={() => setOutreachFor(c)} />
+                <CandidateCard
+                  key={i}
+                  c={c}
+                  ideaText={ideaText}
+                  onOutreach={() => setOutreachFor(c)}
+                />
               ))}
               {cands.length === 0 && (
                 <p className="text-sm text-[var(--muted)]">No candidates yet.</p>
@@ -452,9 +457,39 @@ function Block({
   );
 }
 
-function CandidateCard({ c, onOutreach }: { c: Candidate; onOutreach: () => void }) {
+const INVITE_BASE = "https://try.teamassemble.fr/join";
+
+// Build the invite link a matched candidate would receive — their profile
+// details ride along so the landing page auto-completes for them.
+function buildInviteQuery(c: Candidate, ideaText: string): string {
+  const p = new URLSearchParams({
+    name: c.name,
+    headline: c.headline,
+    role: c.personaRole,
+    why: c.whyMatch,
+    skills: c.expertise.join(","),
+    project: ideaText.slice(0, 240),
+    by: "A founder on Assemble",
+  });
+  if (c.location) p.set("loc", c.location);
+  if (c.profileUrls[0]) p.set("purl", c.profileUrls[0]);
+  return p.toString();
+}
+
+function CandidateCard({
+  c,
+  ideaText,
+  onOutreach,
+}: {
+  c: Candidate;
+  ideaText: string;
+  onOutreach: () => void;
+}) {
   const [decision, setDecision] = useState<"accepted" | "rejected" | null>(null);
+  const [copied, setCopied] = useState(false);
   const pct = Math.round(c.confidence * 100);
+  const showInvite = c.isBestFit && !c.locked;
+  const inviteQuery = showInvite ? buildInviteQuery(c, ideaText) : "";
   return (
     <div
       className={`card relative p-4 transition-opacity ${
@@ -542,6 +577,43 @@ function CandidateCard({ c, onOutreach }: { c: Candidate; onOutreach: () => void
           </button>
         </div>
       </div>
+
+      {showInvite && (
+        <div className="mt-3 border-t border-[var(--border)] pt-3">
+          <p className="text-[11px] text-[var(--muted)]">
+            Send {c.name.split(" ")[0]} their invite — the page auto-fills their
+            profile from this match:
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <a
+              href={`/join?${inviteQuery}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-accent rounded-lg px-3 py-1.5 text-xs font-semibold"
+            >
+              Preview invite ↗
+            </a>
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(`${INVITE_BASE}?${inviteQuery}`);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+              className="chip rounded-lg px-3 py-1.5 text-xs"
+            >
+              {copied ? "Copied ✓" : "Copy invite link"}
+            </button>
+          </div>
+          <a
+            href={`${INVITE_BASE}?${inviteQuery}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 block truncate rounded bg-[var(--bg-2)] px-2 py-1 text-[10px] text-[var(--accent-2)] hover:underline"
+          >
+            try.teamassemble.fr/join?name={c.name.replace(/ /g, "+")}… ↗
+          </a>
+        </div>
+      )}
     </div>
   );
 }
