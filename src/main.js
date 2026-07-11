@@ -291,3 +291,55 @@ elements.clearTranscript.addEventListener("click", resetTranscript);
 window.addEventListener("beforeunload", () => {
   if (conversation) conversation.endSession();
 });
+
+// ── Auto-fill from URL query params ──────────────────────────────────
+(function autoFillFromParams() {
+  const params = new URLSearchParams(window.location.search);
+  const nameVal = params.get("name");
+  const roleVal = params.get("role");
+  const ideaVal = params.get("idea");
+  const expertiseVal = params.get("expertise");
+  const whyMatchVal = params.get("whyMatch");
+
+  // Store idea globally so prompt.js can access it
+  if (ideaVal) window.__assembleIdea = ideaVal;
+
+  // Fill form fields
+  if (nameVal) {
+    document.getElementById("name").value = nameVal;
+    elements.preparedFor.textContent = nameVal;
+  }
+  if (roleVal) document.getElementById("role").value = roleVal;
+
+  // Build profile context from expertise + whyMatch
+  const contextParts = [];
+  if (expertiseVal) contextParts.push(`Expertise: ${expertiseVal}`);
+  if (whyMatchVal) contextParts.push(`Why this person matches: ${whyMatchVal}`);
+  if (contextParts.length > 0) {
+    document.getElementById("profile-context").value = contextParts.join("\n");
+  }
+
+  // Auto-select the first focus option
+  const focusSelect = document.getElementById("focus");
+  if (focusSelect && focusSelect.options.length > 1) {
+    focusSelect.selectedIndex = 1;
+  }
+
+  // Update onboarding copy if idea is provided
+  if (ideaVal) {
+    const lede = document.querySelector(".lede");
+    if (lede) {
+      lede.textContent = `You've been identified as a potential match for this project: "${ideaVal}". Confirm the details below and start a voice conversation to learn more.`;
+    }
+    const opportunity = document.querySelector(".conversation-brief dd");
+    if (opportunity) {
+      opportunity.textContent = `Join the team for: ${ideaVal.slice(0, 80)}${ideaVal.length > 80 ? "…" : ""}`;
+    }
+  }
+
+  // Auto-check consent and submit if we have all required fields
+  if (nameVal && roleVal) {
+    const consent = document.getElementById("voice-consent");
+    if (consent) consent.checked = true;
+  }
+})();
