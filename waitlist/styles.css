@@ -190,15 +190,6 @@ input {
   border-bottom: 1px solid var(--border);
 }
 
-.network-canvas {
-  position: absolute;
-  inset: 72px 0 0;
-  width: 100%;
-  height: calc(100% - 72px);
-  pointer-events: none;
-  opacity: 0.48;
-}
-
 .hero-content {
   position: relative;
   z-index: 1;
@@ -254,6 +245,31 @@ p {
   text-wrap: balance;
 }
 
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 28px;
+}
+
+.demo-cta {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 17px;
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--canvas);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.demo-cta:hover {
+  background: color-mix(in srgb, var(--text) 84%, var(--canvas));
+}
+
 .signup {
   width: min(100%, 600px);
   margin-inline: auto;
@@ -284,17 +300,23 @@ p {
   text-transform: uppercase;
 }
 
+.tally-embed {
+  min-height: 188px;
+  overflow: hidden;
+}
+
 .tally-frame {
   display: block;
   width: 100%;
   min-height: 188px;
   border: 0;
   background: transparent;
+  filter: grayscale(1);
   transition: filter 180ms ease;
 }
 
 .dark .tally-frame {
-  filter: invert(1) hue-rotate(180deg);
+  filter: grayscale(1) invert(1) contrast(0.875);
 }
 
 .privacy-note {
@@ -599,10 +621,6 @@ p {
     padding: 96px 0 28px;
   }
 
-  .network-canvas {
-    opacity: 0.32;
-  }
-
   .eyebrow {
     margin-bottom: 18px;
   }
@@ -621,6 +639,10 @@ p {
     margin: 12px auto 16px;
     font-size: 15px;
     line-height: 1.45;
+  }
+
+  .hero-actions {
+    margin-bottom: 20px;
   }
 
   .signup {
