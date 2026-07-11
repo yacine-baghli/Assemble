@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
+// @ts-expect-error — cloudflare module available at runtime via opennextjs-cloudflare
+import { getRequestContext } from "@opennextjs/cloudflare";
 
-const DODO_API_KEY = process.env.DODO_PAYMENTS_API_KEY || "";
-const DODO_PRODUCT_ID = process.env.DODO_PRODUCT_ID || "";
-const DODO_MODE = process.env.DODO_MODE || "test";
+function getEnv(key: string): string {
+  // Try Cloudflare Workers bindings first, then process.env
+  try {
+    const ctx = getRequestContext();
+    const val = (ctx.env as Record<string, string>)?.[key];
+    if (val) return val;
+  } catch {
+    // Not in Cloudflare context
+  }
+  return process.env[key] || "";
+}
 
-function dodoBase(): string {
-  return DODO_MODE === "live"
+function dodoBase(mode: string): string {
+  return mode === "live"
     ? "https://live.dodopayments.com"
     : "https://test.dodopayments.com";
 }
@@ -16,18 +26,22 @@ export async function POST(req: Request) {
     returnUrl?: string;
   };
 
-  if (!DODO_API_KEY || !DODO_PRODUCT_ID) {
+  const apiKey = getEnv("DODO_PAYMENTS_API_KEY");
+  const productId = getEnv("DODO_PRODUCT_ID");
+  const mode = getEnv("DODO_MODE") || "test";
+
+  if (!apiKey || !productId) {
     return NextResponse.json(
-      { error: "Dodo Payments not configured", url: null },
+      { error: "Dodo Payments not configured", url: null, debug: { hasKey: !!apiKey, hasProduct: !!productId } },
       { status: 503 }
     );
   }
 
   try {
-    const res = await fetch(`${dodoBase()}/payments`, {
+    const res = await fetch(`${dodoBase(mode)}/payments`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${DODO_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -43,7 +57,7 @@ export async function POST(req: Request) {
           name: "Assemble Demo User",
         },
         payment_link: true,
-        product_cart: [{ product_id: DODO_PRODUCT_ID, quantity: 1 }],
+        product_cart: [{ product_id: productId, quantity: 1 }],
         return_url: returnUrl || "https://assemble.yacine-baghli.workers.dev/",
       }),
     });

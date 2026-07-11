@@ -171,9 +171,11 @@ export default function Home() {
                   if (data.url) {
                     window.open(data.url, "_blank");
                   } else {
-                    alert("Dodo checkout is not configured yet. This is a demo feature.");
+                    console.error("Dodo checkout error:", data);
+                    alert(data.error || "Could not create checkout session.");
                   }
-                } catch {
+                } catch (err) {
+                  console.error("Checkout error:", err);
                   alert("Could not create checkout session. Please try again.");
                 } finally {
                   setUpgradeLoading(false);
