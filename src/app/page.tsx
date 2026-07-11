@@ -1,11 +1,32 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 import Teaser from "@/components/Teaser";
+
+function getInitials(name: string): string {
+  return name.split(" ").map(n => n[0]?.toUpperCase() ?? "").join("").slice(0, 2) || "U";
+}
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [userName, setUserName] = useState("User");
+
+  useEffect(() => {
+    // Read user name from URL params or localStorage
+    const params = new URLSearchParams(window.location.search);
+    const nameFromUrl = params.get("name");
+    const stored = localStorage.getItem("assemble_user_name");
+    if (nameFromUrl) {
+      setUserName(nameFromUrl);
+      localStorage.setItem("assemble_user_name", nameFromUrl);
+    } else if (stored) {
+      setUserName(stored);
+    }
+  }, []);
+
+  const initials = getInitials(userName);
 
   return (
     <div className="flex min-h-screen">
@@ -16,16 +37,27 @@ export default function Home() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="var(--fg)"/></svg>
             <span className="text-sm font-semibold tracking-tight">Assemble</span>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--good)] opacity-75" />
-              <span className="inline-flex h-2 w-2 rounded-full bg-[var(--good)]" />
-            </span>
-            <span className="text-xs text-[var(--muted)]">Connected as</span>
-            <div className="h-5 w-5 rounded-full bg-[var(--fg)] flex items-center justify-center text-[8px] font-bold text-[var(--bg)]">
-              AB
+          <div className="flex items-center gap-3">
+            {/* Help button */}
+            <button
+              onClick={() => setHelpOpen(true)}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-xs font-semibold text-[var(--muted)] transition-colors hover:text-[var(--fg)] hover:border-[var(--fg)]"
+              aria-label="How it works"
+            >
+              ?
+            </button>
+            {/* User badge */}
+            <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--good)] opacity-75" />
+                <span className="inline-flex h-2 w-2 rounded-full bg-[var(--good)]" />
+              </span>
+              <span className="text-xs text-[var(--muted)]">Connected as</span>
+              <div className="h-5 w-5 rounded-full bg-[var(--fg)] flex items-center justify-center text-[8px] font-bold text-[var(--bg)]">
+                {initials}
+              </div>
+              <span className="text-xs font-semibold">{userName}</span>
             </div>
-            <span className="text-xs font-semibold">Abdelmouhaimen</span>
           </div>
         </header>
 
@@ -73,10 +105,9 @@ export default function Home() {
         </button>
       )}
 
-      {/* Sidebar — Plan status */}
+      {/* Sidebar — Plan status (overlay) */}
       {sidebarOpen && (
         <aside className="fixed right-4 top-16 z-40 w-[280px] rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-6 shadow-lg">
-          {/* Close button */}
           <button
             onClick={() => setSidebarOpen(false)}
             className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] transition-colors hover:text-[var(--fg)] hover:border-[var(--fg)]"
@@ -85,7 +116,6 @@ export default function Home() {
             ✕
           </button>
 
-          {/* Connected badge */}
           <div className="mb-5">
             <div className="flex items-center gap-2 mb-1">
               <span className="relative flex h-2.5 w-2.5">
@@ -102,7 +132,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Current plan features */}
           <div className="mb-5">
             <p className="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-2">Your plan includes</p>
             <ul className="space-y-1.5">
@@ -115,7 +144,6 @@ export default function Home() {
 
           <div className="h-px bg-[var(--border)] my-3" />
 
-          {/* Upgrade CTA */}
           <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-flex items-center rounded-md bg-[var(--fg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--bg)]">
@@ -162,6 +190,86 @@ export default function Home() {
           </div>
         </aside>
       )}
+
+      {/* Help / How it works modal */}
+      {helpOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setHelpOpen(false)}>
+          <div className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 shadow-2xl mx-4" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setHelpOpen(false)}
+              className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] transition-colors hover:text-[var(--fg)]"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-2xl font-bold mb-1" style={{ fontFamily: 'var(--serif)' }}>How Assemble works</h2>
+            <p className="text-sm text-[var(--muted)] mb-6">Built at the Hermes Buildathon — here&apos;s the full picture.</p>
+
+            <div className="space-y-5">
+              <HelpSection
+                step="01"
+                title="You describe your idea"
+                description="Type or speak your startup idea using our voice interface. Our AI decomposes it into the expertise domains you'll need to build it."
+              />
+              <HelpSection
+                step="02"
+                title="We find the right people"
+                description="Assemble searches professional networks using Linkup's deep web search to find candidates whose experience matches the expertise gaps in your project."
+              />
+              <HelpSection
+                step="03"
+                title="We verify the fit"
+                description="Each candidate is scored on how well their background matches your specific needs. We use OpenAI's models to analyze profile-to-project relevance."
+              />
+              <HelpSection
+                step="04"
+                title="Personalized outreach"
+                description="Select a candidate and we draft a personalized outreach. The candidate receives a voice introduction powered by ElevenLabs where they can learn about your project interactively."
+              />
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-[var(--border)]">
+              <p className="text-[10px] uppercase tracking-wider text-[var(--muted)] mb-3">Powered by</p>
+              <div className="grid grid-cols-2 gap-3">
+                <PartnerBadge name="OpenAI" role="Idea decomposition & matching" />
+                <PartnerBadge name="Linkup" role="Deep web profile sourcing" />
+                <PartnerBadge name="ElevenLabs" role="Voice agent & speech-to-text" />
+                <PartnerBadge name="Convex" role="Real-time backend" />
+                <PartnerBadge name="Cloudflare Workers" role="Edge deployment" />
+                <PartnerBadge name="Dodo Payments" role="Subscription billing" />
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-[var(--border)] text-center">
+              <p className="text-xs text-[var(--muted)]">
+                Built by Abdelmouhaimen & Yacine · Hermes Buildathon 2025
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HelpSection({ step, title, description }: { step: string; title: string; description: string }) {
+  return (
+    <div className="flex gap-4">
+      <span className="text-[10px] font-bold text-[var(--muted)] tracking-wider mt-1">{step}</span>
+      <div>
+        <p className="text-sm font-semibold mb-1">{title}</p>
+        <p className="text-sm text-[var(--muted)] leading-relaxed">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function PartnerBadge({ name, role }: { name: string; role: string }) {
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2">
+      <p className="text-xs font-semibold">{name}</p>
+      <p className="text-[10px] text-[var(--muted)] leading-tight">{role}</p>
     </div>
   );
 }

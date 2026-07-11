@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   convexEnabled,
   getCapabilities,
@@ -31,11 +31,63 @@ const NO_CAPS: Capabilities = {
   dodo: false,
 };
 
-const EXAMPLES = [
+const IDEA_BANK = [
   "A device that grows human neurons on microfluidic chips to test drugs without animals",
   "An AI copilot that turns messy field-sales voice notes into updated CRM records",
   "A marketplace connecting indie game studios with freelance sound designers",
+  "A wearable ring that detects early signs of atrial fibrillation using photoplethysmography",
+  "An app that uses satellite imagery to predict crop yields for smallholder farmers in sub-Saharan Africa",
+  "A browser extension that summarizes academic papers and highlights methodology weaknesses",
+  "A platform for fractional CFO services for Series A startups using AI-driven financial modeling",
+  "A drone-based system for reforesting burned areas by planting seed pods at scale",
+  "An API that converts natural language legal clauses into machine-readable smart contracts",
+  "A social network for scientists to share negative experiment results and avoid duplicated failures",
+  "A robotic kitchen module that prepares personalized meals based on dietary biomarker data",
+  "A decentralized identity platform for refugees to carry verifiable credentials across borders",
+  "A SaaS tool that automates GDPR data subject access requests for mid-market companies",
+  "A peer-to-peer energy trading platform for residential solar panel owners",
+  "An AI tutor that adapts in real-time to a student's emotional state using webcam analysis",
+  "A supply chain transparency tool that tracks conflict minerals from mine to product",
+  "A voice-first interface for elderly patients to manage chronic medication schedules",
+  "A carbon credit marketplace verified by IoT sensors embedded in forestry projects",
+  "An AR app that lets interior designers preview furniture placement using LiDAR room scans",
+  "A micro-insurance platform for gig workers that adjusts premiums based on real-time risk",
+  "A lab-grown leather production startup using mycelium-based biomaterials",
+  "An AI-powered code review tool that catches security vulnerabilities before deployment",
+  "A telemedicine platform specialized in rare genetic diseases connecting patients to global experts",
+  "A smart building management system that reduces energy use by 40% using occupancy prediction",
+  "A fintech app that helps immigrants send remittances with zero fees using stablecoins",
+  "A personalized cancer vaccine platform using mRNA technology and tumor sequencing",
+  "A collaborative design tool for architects that integrates structural engineering constraints in real-time",
+  "A platform matching retired executives with early-stage founders for fractional advisory",
+  "An autonomous underwater drone for inspecting offshore wind turbine foundations",
+  "A mental health chatbot trained on CBT protocols that integrates with therapist dashboards",
+  "A B2B marketplace for surplus industrial materials to reduce manufacturing waste",
+  "A DNA-based data storage system for long-term archival of enterprise data",
+  "An AI agent that negotiates SaaS contract renewals on behalf of procurement teams",
+  "A vertical farming system optimized for high-protein crops in urban food deserts",
+  "A wearable EEG headband that improves focus through neurofeedback during work sessions",
+  "A platform that converts abandoned malls into co-living spaces with modular construction",
+  "An AI-powered podcast editor that removes filler words and optimizes pacing automatically",
+  "A device that monitors water quality in real-time for municipal treatment plants using spectroscopy",
+  "A last-mile delivery network using autonomous sidewalk robots in dense European cities",
+  "A digital twin platform for simulating clinical trials before recruiting patients",
+  "An open-source tool for bias auditing in hiring algorithms used by Fortune 500 companies",
+  "A bioprinting startup creating patient-specific tissue grafts for burn victims",
+  "A climate risk scoring API for real estate investors evaluating coastal property portfolios",
+  "A community-owned broadband network using mesh WiFi for underserved rural areas",
+  "A pet health monitoring collar that detects early signs of kidney disease in cats",
+  "An AI-powered fashion design tool that generates sustainable clothing patterns from sketches",
+  "A platform for booking and managing clinical trial participation for patients",
+  "A quantum computing cloud service optimized for drug molecule simulation",
+  "An AI writing assistant for patent attorneys that auto-generates prior art searches",
+  "A logistics platform optimizing cold-chain delivery for mRNA vaccines in tropical regions",
 ];
+
+function pickRandom<T>(arr: T[], count: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 type Stage = "idea" | "loading" | "sourcing" | "fitting" | "preview" | "sending" | "contacted";
 
@@ -46,6 +98,7 @@ export default function Teaser() {
   const [error, setError] = useState<string | null>(null);
   const [caps, setCaps] = useState<Capabilities>(NO_CAPS);
   const [selectedCandidate, setSelectedCandidate] = useState<PreviewCandidate | null>(null);
+  const randomExamples = useMemo(() => pickRandom(IDEA_BANK, 3), []);
 
   useEffect(() => {
     getCapabilities().then(setCaps).catch(() => {});
@@ -146,7 +199,7 @@ export default function Teaser() {
                 Try an example
               </p>
               <div className="mt-2 flex flex-col gap-2">
-                {EXAMPLES.map((ex) => (
+                {randomExamples.map((ex) => (
                   <button
                     key={ex}
                     onClick={() => setIdea(ex)}
