@@ -26,13 +26,17 @@ export default function VoiceMic({
 }) {
   const [state, setState] = useState<State>("idle");
   const [err, setErr] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const stopRef = useRef<null | (() => void)>(null);
   const recRef = useRef<null | { stop: () => Promise<{ base64: string; mime: string }> }>(null);
 
-  const useEleven = caps.elevenlabsStt && supportsRecording();
-  const useBrowser = !useEleven && supportsBrowserSTT();
+  // Browser-capability detection must run only after mount, otherwise SSR
+  // (no window) and the client disagree and hydration fails.
+  const useEleven = mounted && caps.elevenlabsStt && supportsRecording();
+  const useBrowser = mounted && !useEleven && supportsBrowserSTT();
   const available = useEleven || useBrowser;
 
+  useEffect(() => setMounted(true), []);
   useEffect(() => () => stopRef.current?.(), []);
 
   async function start() {

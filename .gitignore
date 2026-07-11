@@ -49,3 +49,7 @@ next-env.d.ts
 
 # dev fallback data
 .dev-data/
+
+# local secrets (never commit)
+secrets.local.env
+api.txt
