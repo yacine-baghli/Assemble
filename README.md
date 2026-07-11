@@ -1,6 +1,6 @@
 # Assemble voice agent demo
 
-A personalized voice introduction for people contacted by Assemble. The visitor confirms their profile context, chooses a conversation focus, and speaks with an ElevenLabs agent grounded in Assemble's product facts.
+A voice demo for people exploring Assemble. The visitor shares their profile context, explains what they could bring to the project, chooses a conversation focus, and speaks with an ElevenLabs agent grounded in Assemble's product facts.
 
 ## Requirements
 

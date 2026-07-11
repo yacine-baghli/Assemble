@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A personalized voice introduction to Assemble.">
+  <meta name="description" content="A live voice introduction to Assemble.">
   <meta name="theme-color" content="#f4f4f0">
   <title>Assemble - Voice introduction</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -19,7 +19,7 @@
       <span>Assemble</span>
     </a>
     <p>Voice introduction</p>
-    <div class="secure-label"><i data-lucide="shield-check" aria-hidden="true"></i><span>Personalized session</span></div>
+    <div class="secure-label"><i data-lucide="shield-check" aria-hidden="true"></i><span>Live voice session</span></div>
   </header>
 
   <main id="main">
@@ -27,11 +27,11 @@
       <div class="onboarding-copy">
         <p class="step-label">01 / 02</p>
         <h1 id="onboarding-title">Before we begin.</h1>
-        <p class="lede">Confirm the profile information used to prepare this conversation.</p>
+        <p class="lede">Share a little context so the agent can explain Assemble and understand where you could contribute.</p>
 
         <dl class="conversation-brief">
-          <div><dt>Conversation</dt><dd>Introduction to Assemble</dd></div>
-          <div><dt>Prepared for</dt><dd id="prepared-for-preview">Your profile</dd></div>
+          <div><dt>Conversation</dt><dd>Explore Assemble</dd></div>
+          <div><dt>Speaking as</dt><dd id="prepared-for-preview">Your profile</dd></div>
           <div><dt>Format</dt><dd>Live voice, questions welcome</dd></div>
         </dl>
       </div>
@@ -40,7 +40,7 @@
         <div class="form-heading">
           <div>
             <p class="section-label">Profile context</p>
-            <h2>What we know about you</h2>
+            <h2>What should the agent know?</h2>
           </div>
           <span>Required fields *</span>
         </div>
@@ -81,8 +81,8 @@
         </label>
 
         <label class="field">
-          <span>Why we reached out *</span>
-          <textarea id="match-reason" name="matchReason" rows="3" maxlength="600" placeholder="For example: Your experience building early-stage AI products looks relevant to the founding team we are assembling." required></textarea>
+          <span>Why should we work with you? *</span>
+          <textarea id="candidate-pitch" name="candidatePitch" rows="3" maxlength="600" placeholder="Tell us what you would bring to Assemble, the kind of problems you solve well, or why the idea interests you." required></textarea>
         </label>
 
         <label class="consent">
@@ -91,7 +91,7 @@
         </label>
 
         <div class="form-actions">
-          <p>Your information is used only to personalize this session.</p>
+          <p>Your information is used only to guide this demo conversation.</p>
           <button class="primary-button" type="submit">
             <span>Continue to voice</span>
             <i data-lucide="arrow-right" aria-hidden="true"></i>
@@ -112,7 +112,7 @@
         </div>
         <dl>
           <div><dt>Focus</dt><dd id="summary-focus"></dd></div>
-          <div><dt>Why you</dt><dd id="summary-reason"></dd></div>
+          <div><dt>Why work with you</dt><dd id="summary-pitch"></dd></div>
         </dl>
         <button class="text-button" id="edit-profile" type="button">
           <i data-lucide="pencil" aria-hidden="true"></i>
@@ -123,7 +123,7 @@
       <div class="voice-stage" data-call-state="ready" data-mode="listening" id="voice-stage">
         <div class="voice-heading">
           <p class="section-label">Assemble voice agent</p>
-          <h1 id="conversation-title">A conversation prepared for <span id="conversation-name">you</span>.</h1>
+          <h1 id="conversation-title">Meet Assemble.</h1>
         </div>
 
         <div class="voice-visual" id="voice-visual" aria-hidden="true">

@@ -57,7 +57,7 @@ function readProfile() {
     location: clean(data.get("location"), 100),
     focus: clean(data.get("focus"), 160),
     profileContext: clean(data.get("profileContext"), 600),
-    matchReason: clean(data.get("matchReason"), 600)
+    candidatePitch: clean(data.get("candidatePitch"), 600)
   };
 }
 
@@ -83,8 +83,7 @@ function updateProfileSummary() {
   setText("summary-name", profile.name);
   setText("summary-role", [profile.role, profile.company].filter(Boolean).join(" at "));
   setText("summary-focus", profile.focus);
-  setText("summary-reason", profile.matchReason);
-  setText("conversation-name", profile.name.split(" ")[0]);
+  setText("summary-pitch", profile.candidatePitch);
 }
 
 function setCallState(state, title, detail) {
@@ -178,7 +177,7 @@ async function requestConversationToken() {
 
 async function startConversation() {
   showError("");
-  setCallState("connecting", "Connecting", "Preparing your personalized voice session...");
+  setCallState("connecting", "Connecting", "Preparing the voice session...");
   elements.connectionLabel.textContent = "Connecting";
   elements.startCall.disabled = true;
 
