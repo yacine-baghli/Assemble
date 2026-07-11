@@ -60,14 +60,21 @@ ElevenLabs.
 
 ## Demo
 
-> Add your screenshots / demo clip under `docs/` and reference them here.
+<div align="center">
 
-```
-docs/
-├── hero.png            # "Turn an idea into a founding team"
-├── matches.png         # detected domains + candidates with fit scores
-└── voice-outreach.png  # candidate-side voice conversation
-```
+![Assemble — turn an idea into a founding team](docs/hero.png)
+
+_Describe your idea, by text or by voice._
+
+![Detected domains and candidates with fit scores](docs/matches.png)
+
+_Assemble decomposes the idea and sources real people for each role, each with a fit score._
+
+![Candidate-side voice conversation](docs/voice-outreach.png)
+
+_Instead of a cold message, the candidate can hold a live voice conversation with an agent._
+
+</div>
 
 ## How it works
 
