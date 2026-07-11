@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Assemble
 
-## Getting Started
+Turn an idea into a **founding team**. Assemble decomposes an idea into the
+expertise you're missing, finds real people on the public web, explains every
+match, drafts validated outreach, and plans the first 30 days.
 
-First, run the development server:
+Built for the **Hermes Buildathon** (track: *AI as Agency*).
+
+## Stack
+
+- **Next.js 15 (App Router) + TypeScript** — thin frontend
+- **Convex** — backend, DB, realtime, agent orchestration (actions), observability
+- **Linkup** — real people search (structured)
+- **OpenAI** — strategy decomposition, ranking, drafting
+- **ElevenLabs** — voice (STT + TTS)
+- **Resend** — real outreach email (human-approved)
+- **Dodo Payments** — unlock the #1 best-fit
+- **Cloudflare Workers** via **OpenNext** — deploy
+
+### Architecture note (why Cloudflare is painless)
+
+All heavy logic (OpenAI, Linkup, ElevenLabs, Resend, Dodo webhooks) lives in
+**Convex actions**, not in Next server routes. The Cloudflare Worker only serves
+the Next frontend + thin routes that talk to Convex over the network. This keeps
+the Worker under its size limit and avoids Node-runtime compat pain — while still
+earning the Cloudflare power-up (live URL + dashboard).
+
+## Run it locally
+
+The app runs in **two modes**, chosen automatically from `NEXT_PUBLIC_CONVEX_URL`:
+
+- **unset → demo mode:** deterministic decomposition offline; leads saved to
+  `.dev-data/leads.json`.
+- **set → full mode:** Convex action → OpenAI (if key set); leads in the Convex
+  `users` table.
+
+### Demo mode (zero accounts — works right now)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Type an idea → see the decomposition + 3 blurred candidate cards → leave an
+email. Captured leads land in `.dev-data/leads.json` (inspect via
+`GET /api/demo/lead`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Full mode (graded demo)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx convex dev       # one-time browser login; writes NEXT_PUBLIC_CONVEX_URL to .env.local
+```
 
-## Learn More
+Set the heavy secrets on Convex (they run the actions):
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx convex env set OPENAI_API_KEY sk-...
+npx convex env set LINKUP_API_KEY ...
+npx convex env set ELEVENLABS_API_KEY ...
+npx convex env set RESEND_API_KEY ...
+npx convex env set DODO_PAYMENTS_API_KEY ...
+npx convex env set DODO_WEBHOOK_SECRET ...
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Then `npm run dev` — the app now uses live Convex + OpenAI.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy to Cloudflare
 
-## Deploy on Vercel
+Prereqs: `npx wrangler login` (browser). On Windows, run the deploy from **WSL**
+(OpenNext/Wrangler are most reliable on Linux); the repo lives at
+`/mnt/c/Yacine/.../assemble` from WSL.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# build-time public vars (baked into the Worker):
+#   NEXT_PUBLIC_CONVEX_URL, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_PLAUSIBLE_DOMAIN
+npm run deploy       # opennextjs-cloudflare build && deploy
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Or connect the GitHub repo to **Cloudflare Workers Builds** (build:
+`npx @opennextjs/cloudflare build`, deploy: `npx @opennextjs/cloudflare deploy`)
+so every `git push` deploys.
+
+## Observability
+
+Every agent call writes an `agent_steps` row (agent, input, output, tokens, cost,
+latency, parent). See `/runs` for the run tree.
+
+## Hermes eligibility
+
+At least one isolated module is built via a **Hermes session** with receipts kept
+(see `ASSEMBLE_BUILD_SPEC.md` → *Hermes*). Recommended module: the Execution
+Agent or the `/runs` dashboard — both off the live-demo critical path.

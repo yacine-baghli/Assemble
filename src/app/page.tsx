@@ -1,65 +1,50 @@
-import Image from "next/image";
+import Teaser from "@/components/Teaser";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="flex min-h-screen flex-col items-center px-5 py-14 sm:py-20">
+      <header className="mb-10 flex items-center gap-2">
+        <div className="h-6 w-6 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)]" />
+        <span className="text-sm font-semibold tracking-tight">Assemble</span>
+      </header>
+
+      <section className="mb-10 max-w-2xl text-center">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/5 px-3 py-1 text-xs text-[var(--muted)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--good)]" />
+          AI that builds your founding team
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+          Turn an idea into a{" "}
+          <span className="gradient-text">founding team</span>.
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-base text-[var(--muted)]">
+          Describe what you want to build. Assemble decomposes it into the
+          expertise you&apos;re missing, finds the real people who fit, explains
+          every match, and drafts the outreach.
+        </p>
+      </section>
+
+      <Teaser />
+
+      <footer className="mt-20 text-center text-xs text-[var(--muted)]">
+        <div className="mx-auto mb-4 grid max-w-md grid-cols-3 gap-2 text-[11px]">
+          <Step n="1" label="Decompose the idea" />
+          <Step n="2" label="Source real people" />
+          <Step n="3" label="Draft the outreach" />
         </div>
-      </main>
+        Built at the Hermes Buildathon · Assemble
+      </footer>
+    </main>
+  );
+}
+
+function Step({ n, label }: { n: string; label: string }) {
+  return (
+    <div className="card px-2 py-3">
+      <div className="mx-auto mb-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] text-[var(--accent-2)]">
+        {n}
+      </div>
+      {label}
     </div>
   );
 }
