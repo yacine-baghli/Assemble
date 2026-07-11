@@ -306,6 +306,43 @@ p {
   filter: grayscale(1) invert(1) contrast(0.875);
 }
 
+.signup-success {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: left;
+}
+
+.signup-success[hidden] {
+  display: none;
+}
+
+.signup-success a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--canvas);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.signup-success a:hover {
+  background: color-mix(in srgb, var(--text) 84%, var(--canvas));
+}
+
 .privacy-note {
   max-width: 580px;
   margin: 4px auto 0;
