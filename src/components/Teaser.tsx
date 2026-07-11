@@ -278,7 +278,7 @@ function Preview({ result }: { result: TeaserResult }) {
             <div key={i} className="card relative overflow-hidden p-4">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)]" />
-                <div className="blur-locked text-sm font-semibold">{c.name}</div>
+                <div className="text-sm font-semibold">{c.name}</div>
               </div>
               <p className="mt-2 text-xs text-[var(--muted)]">{c.headline}</p>
               <p className="mt-2 text-xs leading-relaxed text-[var(--fg)]/80">
@@ -291,9 +291,7 @@ function Preview({ result }: { result: TeaserResult }) {
                   </span>
                 ))}
               </div>
-              <div className="absolute right-2 top-2 text-[10px] text-[var(--muted)]">
-                🔒 locked
-              </div>
+
             </div>
           ))}
         </div>
