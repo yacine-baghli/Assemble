@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
-  captureEmail,
   convexEnabled,
   getCapabilities,
   teaserPreview,
   type Capabilities,
+  type PreviewCandidate,
   type TeaserResult,
 } from "@/lib/backend";
 import VoiceMic from "@/components/VoiceMic";
@@ -26,16 +26,15 @@ const EXAMPLES = [
   "A marketplace connecting indie game studios with freelance sound designers",
 ];
 
-type Stage = "idea" | "loading" | "preview" | "captured";
+type Stage = "idea" | "loading" | "preview" | "sending" | "contacted";
 
 export default function Teaser() {
   const [idea, setIdea] = useState("");
   const [stage, setStage] = useState<Stage>("idea");
   const [result, setResult] = useState<TeaserResult | null>(null);
-  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [caps, setCaps] = useState<Capabilities>(NO_CAPS);
+  const [selectedCandidate, setSelectedCandidate] = useState<PreviewCandidate | null>(null);
 
   useEffect(() => {
     getCapabilities().then(setCaps).catch(() => {});
@@ -58,22 +57,24 @@ export default function Teaser() {
     }
   }
 
-  async function onCapture(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
-      await captureEmail({
-        email,
-        projectId: result?.projectId,
-        source: "teaser",
-      });
-      setStage("captured");
-    } catch (err) {
-      setError((err as Error).message || "Could not save your email.");
-    } finally {
-      setSubmitting(false);
-    }
+  function onSelectCandidate(candidate: PreviewCandidate) {
+    setSelectedCandidate(candidate);
+    setStage("sending");
+    // Simulate email sending animation, then transition
+    setTimeout(() => {
+      setStage("contacted");
+    }, 2200);
+  }
+
+  function buildVoiceAgentUrl(candidate: PreviewCandidate): string {
+    const params = new URLSearchParams({
+      name: candidate.name,
+      role: candidate.headline,
+      idea: idea,
+      expertise: candidate.expertise.join(", "),
+      whyMatch: candidate.whyMatch,
+    });
+    return `https://try.teamassemble.fr/?${params.toString()}`;
   }
 
   return (
@@ -141,66 +142,95 @@ export default function Teaser() {
         </div>
       )}
 
-      {/* Preview + email gate */}
-      {(stage === "preview" || stage === "captured") && result && (
+      {/* Preview — clickable profiles */}
+      {stage === "preview" && result && (
         <div className="fade-up space-y-6">
-          <Preview result={result} />
+          <Preview result={result} onSelect={onSelectCandidate} />
+          {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+        </div>
+      )}
 
-          {stage === "preview" ? (
-            <div className="card p-6 text-center">
-              <h3 className="text-lg font-semibold">
-                Your founding team is ready.
-              </h3>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                Drop your email to unlock the real people behind these roles —
-                sourced from the public web, each match explained.
+      {/* Sending email animation */}
+      {stage === "sending" && selectedCandidate && (
+        <div className="fade-up flex flex-col items-center justify-center py-16">
+          <div className="email-fly-animation mb-6">
+            <div className="email-icon">✉️</div>
+          </div>
+          <h3 className="text-lg font-semibold">
+            Sending outreach to {selectedCandidate.name}…
+          </h3>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Preparing your personalized introduction
+          </p>
+          <div className="mt-4 flex gap-1">
+            <span className="sending-dot" style={{ animationDelay: "0s" }} />
+            <span className="sending-dot" style={{ animationDelay: "0.2s" }} />
+            <span className="sending-dot" style={{ animationDelay: "0.4s" }} />
+          </div>
+        </div>
+      )}
+
+      {/* Contacted — show CTA to voice agent */}
+      {stage === "contacted" && selectedCandidate && (
+        <div className="fade-up space-y-6">
+          <div className="card p-6 text-center">
+            <div className="text-4xl mb-3">✅</div>
+            <h3 className="text-xl font-bold">
+              Outreach sent to {selectedCandidate.name}
+            </h3>
+            <p className="mt-2 text-sm text-[var(--muted)] max-w-md mx-auto">
+              {selectedCandidate.name} will receive a personalized voice introduction 
+              about your project. See exactly what they&apos;ll experience:
+            </p>
+
+            <div className="mt-6 card p-5 text-left max-w-md mx-auto">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-sm font-bold">
+                  {selectedCandidate.name.split(" ").map(n => n[0]).join("")}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{selectedCandidate.name}</p>
+                  <p className="text-xs text-[var(--muted)]">{selectedCandidate.headline}</p>
+                </div>
+              </div>
+              <p className="text-xs text-[var(--fg)]/80 leading-relaxed">
+                {selectedCandidate.whyMatch}
               </p>
-              <form
-                onSubmit={onCapture}
-                className="mx-auto mt-4 flex max-w-md flex-col gap-2 sm:flex-row"
-              >
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@work.com"
-                  className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
-                />
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn-accent rounded-xl px-5 py-2.5 text-sm font-semibold"
-                >
-                  {submitting ? "Saving…" : "Unlock my team"}
-                </button>
-              </form>
-              {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-              <p className="mt-3 text-xs text-[var(--muted)]">
-                No spam. We&apos;ll email you when your matches are live.
-              </p>
+              <div className="mt-3 flex flex-wrap gap-1">
+                {selectedCandidate.expertise.map((e) => (
+                  <span key={e} className="chip px-2 py-0.5 text-[10px]">
+                    {e}
+                  </span>
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="card p-6 text-center fade-up">
-              <div className="text-3xl">✅</div>
-              <h3 className="mt-2 text-lg font-semibold">You&apos;re on the list.</h3>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                We&apos;ll reach out at <span className="text-[var(--fg)]">{email}</span>{" "}
-                with your matched co-founders.
-              </p>
-              <button
-                onClick={() => {
-                  setIdea("");
-                  setEmail("");
-                  setResult(null);
-                  setStage("idea");
-                }}
-                className="mt-4 text-sm text-[var(--accent-2)] hover:underline"
-              >
-                Try another idea
-              </button>
-            </div>
-          )}
+
+            <a
+              href={buildVoiceAgentUrl(selectedCandidate)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 btn-accent rounded-xl px-6 py-3 text-sm font-semibold mt-6 no-underline"
+            >
+              🎙️ See what {selectedCandidate.name.split(" ")[0]} receives
+              <span className="text-lg">→</span>
+            </a>
+
+            <p className="mt-3 text-xs text-[var(--muted)]">
+              Experience the voice introduction as if you were the candidate
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              setIdea("");
+              setSelectedCandidate(null);
+              setResult(null);
+              setStage("idea");
+            }}
+            className="mx-auto block text-sm text-[var(--accent-2)] hover:underline"
+          >
+            ← Try another idea
+          </button>
         </div>
       )}
 
@@ -224,7 +254,13 @@ function LoadingSkeleton() {
   );
 }
 
-function Preview({ result }: { result: TeaserResult }) {
+function Preview({
+  result,
+  onSelect,
+}: {
+  result: TeaserResult;
+  onSelect: (c: PreviewCandidate) => void;
+}) {
   return (
     <div className="space-y-5">
       <div>
@@ -271,13 +307,19 @@ function Preview({ result }: { result: TeaserResult }) {
 
       <div>
         <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-          Your founding team ({result.previewCandidates.length} matches)
+          Your founding team ({result.previewCandidates.length} matches) — click to reach out
         </p>
         <div className="mt-2 grid gap-3 sm:grid-cols-3">
           {result.previewCandidates.map((c, i) => (
-            <div key={i} className="card relative overflow-hidden p-4">
+            <button
+              key={i}
+              onClick={() => onSelect(c)}
+              className="card relative overflow-hidden p-4 text-left transition-all duration-200 hover:border-[var(--accent)] hover:shadow-[0_0_20px_rgba(124,92,255,0.2)] hover:scale-[1.02] cursor-pointer group"
+            >
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)]" />
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] flex items-center justify-center text-[10px] font-bold">
+                  {c.name.split(" ").map(n => n[0]).join("")}
+                </div>
                 <div className="text-sm font-semibold">{c.name}</div>
               </div>
               <p className="mt-2 text-xs text-[var(--muted)]">{c.headline}</p>
@@ -291,8 +333,10 @@ function Preview({ result }: { result: TeaserResult }) {
                   </span>
                 ))}
               </div>
-
-            </div>
+              <div className="absolute right-2 top-2 text-[10px] text-[var(--muted)] opacity-0 group-hover:opacity-100 transition-opacity">
+                ✉️ Contact
+              </div>
+            </button>
           ))}
         </div>
       </div>
