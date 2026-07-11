@@ -10,6 +10,11 @@
   },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "DODO_PAYMENTS_API_KEY": "QphXqbwmFDpjwmBG.iiU0aDLI6sX339Ofbn5n8HGVeUWJA0SGjxRpOkZBkC1Z0Q-K",
+    "DODO_PRODUCT_ID": "pdt_0NixA6oHtXHfSCvoDJUdS",
+    "DODO_MODE": "test"
   }
   // Runtime secrets are injected via `wrangler secret put <NAME>` or the CF dashboard.
   // NEXT_PUBLIC_* values are baked at build time (see .dev.vars / CI env).

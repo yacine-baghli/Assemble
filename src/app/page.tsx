@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Teaser from "@/components/Teaser";
-
-const DODO_CHECKOUT_URL = "https://test.dodopayments.com/buy/pdt_0NixA6oHtXHfSCvoDJUdS";
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   return (
     <div className="flex min-h-screen">
@@ -132,14 +131,32 @@ export default function Home() {
                 <PlanFeature upcoming label="Outreach to 3 profiles" />
                 <PlanFeature upcoming label="Priority matching" />
               </ul>
-              <a
-                href={DODO_CHECKOUT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-center text-sm font-semibold text-white no-underline transition-all hover:shadow-[0_8px_24px_-6px_rgba(245,158,11,0.5)] hover:translate-y-[-1px]"
+              <button
+                onClick={async () => {
+                  setUpgradeLoading(true);
+                  try {
+                    const res = await fetch("/api/dodo-checkout", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ returnUrl: window.location.href }),
+                    });
+                    const data = await res.json();
+                    if (data.url) {
+                      window.open(data.url, "_blank");
+                    } else {
+                      alert("Dodo checkout is not configured yet. This is a demo feature.");
+                    }
+                  } catch {
+                    alert("Could not create checkout session. Please try again.");
+                  } finally {
+                    setUpgradeLoading(false);
+                  }
+                }}
+                disabled={upgradeLoading}
+                className="block w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-center text-sm font-semibold text-white border-none cursor-pointer transition-all hover:shadow-[0_8px_24px_-6px_rgba(245,158,11,0.5)] hover:translate-y-[-1px] disabled:opacity-60"
               >
-                Upgrade to Business →
-              </a>
+                {upgradeLoading ? "Creating checkout…" : "Upgrade to Business →"}
+              </button>
               <p className="mt-2 text-center text-[10px] text-[var(--muted)]">
                 Powered by Dodo Payments
               </p>
