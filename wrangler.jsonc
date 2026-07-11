@@ -3,16 +3,10 @@
   "name": "assemble-voice-agent-demo",
   "main": "./worker/index.js",
   "compatibility_date": "2026-07-11",
-  "routes": [
-    {
-      "pattern": "try.teamassemble.fr",
-      "custom_domain": true
-    }
-  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"],
+    "run_worker_first": true,
     "not_found_handling": "single-page-application"
   },
   "observability": {
