@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-// @ts-expect-error — cloudflare module available at runtime via opennextjs-cloudflare
-import { getRequestContext } from "@opennextjs/cloudflare";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-function getEnv(key: string): string {
+async function getEnv(key: string): Promise<string> {
   // Try Cloudflare Workers bindings first, then process.env
   try {
-    const ctx = getRequestContext();
-    const val = (ctx.env as Record<string, string>)?.[key];
+    const { env } = await getCloudflareContext();
+    const val = (env as Record<string, string>)?.[key];
     if (val) return val;
   } catch {
-    // Not in Cloudflare context
+    // Not in Cloudflare context (local dev)
   }
   return process.env[key] || "";
 }
@@ -20,19 +19,19 @@ function dodoBase(mode: string): string {
     : "https://test.dodopayments.com";
 }
 
-// Creates a Dodo checkout session and returns the checkout URL.
+// Creates a Dodo payment and returns the payment link URL.
 export async function POST(req: Request) {
   const { returnUrl } = (await req.json().catch(() => ({}))) as {
     returnUrl?: string;
   };
 
-  const apiKey = getEnv("DODO_PAYMENTS_API_KEY");
-  const productId = getEnv("DODO_PRODUCT_ID");
-  const mode = getEnv("DODO_MODE") || "test";
+  const apiKey = await getEnv("DODO_PAYMENTS_API_KEY");
+  const productId = await getEnv("DODO_PRODUCT_ID");
+  const mode = (await getEnv("DODO_MODE")) || "test";
 
   if (!apiKey || !productId) {
     return NextResponse.json(
-      { error: "Dodo Payments not configured", url: null, debug: { hasKey: !!apiKey, hasProduct: !!productId } },
+      { error: "Dodo Payments not configured", url: null },
       { status: 503 }
     );
   }
