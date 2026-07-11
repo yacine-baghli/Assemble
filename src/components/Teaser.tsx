@@ -11,6 +11,17 @@ import {
 } from "@/lib/backend";
 import VoiceMic from "@/components/VoiceMic";
 
+// Compute a deterministic fit score from candidate name + idea text
+function computeFitScore(name: string, idea: string, rank: number): number {
+  let h = 5381;
+  const s = (name + idea).toLowerCase();
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) & 0x7fffffff;
+  // Best candidate: 88-97, second: 82-91, third: 78-87
+  const base = [88, 82, 78][rank] ?? 78;
+  const range = [10, 10, 10][rank] ?? 10;
+  return base + (h % range);
+}
+
 const NO_CAPS: Capabilities = {
   openai: false,
   linkup: false,
@@ -150,7 +161,7 @@ export default function Teaser() {
 
           {stage === "loading" && <LoadingStepDecompose />}
           {stage === "sourcing" && <LoadingStepLinkup />}
-          {stage === "fitting" && <LoadingStepFit result={result} />}
+          {stage === "fitting" && <LoadingStepFit result={result} idea={idea} />}
         </div>
       )}
 
@@ -313,8 +324,8 @@ function LoadingStepLinkup() {
   );
 }
 
-function LoadingStepFit({ result }: { result: TeaserResult | null }) {
-  const fitScores = [94, 89, 87];
+function LoadingStepFit({ result, idea }: { result: TeaserResult | null; idea: string }) {
+  const candidates = result?.previewCandidates ?? [];
   return (
     <div className="mt-6 space-y-3">
       <div className="card p-4 flex items-center gap-3 border-[var(--good)]/30">
@@ -346,13 +357,13 @@ function LoadingStepFit({ result }: { result: TeaserResult | null }) {
       </div>
       {/* Show animated fit scores */}
       <div className="grid gap-2 sm:grid-cols-3">
-        {(result?.previewCandidates ?? [{name: "Loading..."}, {name: "Loading..."}, {name: "Loading..."}]).map((c, i) => (
+        {(candidates.length > 0 ? candidates : [{name: "Candidate 1"}, {name: "Candidate 2"}, {name: "Candidate 3"}] as PreviewCandidate[]).map((c, i) => (
           <div key={i} className="card p-3 text-center" style={{ animation: `fadeIn 0.5s ease ${i * 0.3}s both` }}>
             <div className="text-2xl font-bold gradient-text" style={{ animation: `countUp 1s ease ${i * 0.3 + 0.5}s both` }}>
-              {fitScores[i] ?? 85}%
+              {computeFitScore(c.name, idea, i)}%
             </div>
-            <p className="text-xs text-[var(--muted)] mt-1 truncate">{"name" in c ? (c as PreviewCandidate).name ?? `Candidate ${i + 1}` : `Candidate ${i + 1}`}</p>
-            <p className="text-[10px] text-[var(--good)] mt-0.5">Strong match</p>
+            <p className="text-xs text-[var(--muted)] mt-1 truncate">{c.name}</p>
+            <p className="text-[10px] text-[var(--good)] mt-0.5">{i === 0 ? "Best match" : "Strong match"}</p>
           </div>
         ))}
       </div>
@@ -417,7 +428,7 @@ function Preview({
         </p>
         <div className="mt-2 grid gap-3 sm:grid-cols-3">
           {result.previewCandidates.map((c, i) => {
-            const fitScore = [94, 89, 87][i] ?? 85;
+            const fitScore = computeFitScore(c.name, result.projectId, i);
             return (
               <button
                 key={i}

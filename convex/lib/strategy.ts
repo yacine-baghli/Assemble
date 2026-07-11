@@ -127,17 +127,22 @@ const GENERIC_GTM: Persona = {
   rationale: "You need a counterpart focused on customers and revenue so the founder-market fit is complete.",
 };
 
-const FIRST_NAMES = ["Maya", "Léo", "Amara", "Kai", "Sofia", "Noah", "Priya", "Jonas", "Yuki", "Diego"];
-const LAST_INITIALS = ["R.", "M.", "K.", "B.", "T.", "L.", "S.", "N."];
+const FIRST_NAMES = [
+  "Maya", "Léo", "Amara", "Kai", "Sofia", "Noah", "Priya", "Jonas", "Yuki", "Diego",
+  "Elena", "Marcus", "Anya", "Tariq", "Ingrid", "Mateo", "Zara", "Ravi", "Fiona", "Sami",
+  "Hana", "Viktor", "Lina", "Oscar", "Noor", "Felix", "Iris", "Dario", "Mei", "Aiden",
+];
+const LAST_INITIALS = ["R.", "M.", "K.", "B.", "T.", "L.", "S.", "N.", "C.", "W.", "J.", "V.", "P.", "G.", "D.", "H."];
 
 function pick<T>(arr: T[], seed: number): T {
-  return arr[seed % arr.length];
+  return arr[Math.abs(seed) % arr.length];
 }
 
 function seedFrom(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) & 0xffffffff;
-  return Math.abs(h);
+  let h = 5381;
+  const lower = s.toLowerCase();
+  for (let i = 0; i < lower.length; i++) h = ((h << 5) + h + lower.charCodeAt(i)) & 0x7fffffff;
+  return h;
 }
 
 export function demoStrategy(idea: string): StrategyResult {
@@ -188,17 +193,23 @@ export function demoStrategy(idea: string): StrategyResult {
       ]
     : [];
 
-  const previewCandidates: PreviewCandidate[] = personas.slice(0, 3).map((p, i) => ({
-    name: `${pick(FIRST_NAMES, seed + i)} ${pick(LAST_INITIALS, seed + i * 3)}`,
-    headline: `${p.role} · ${p.requiredSkills[0]}`,
-    whyMatch: p.rationale,
-    expertise: p.requiredSkills.slice(0, 3),
-  }));
+  const previewCandidates: PreviewCandidate[] = personas.slice(0, 3).map((p, i) => {
+    // Use different offsets per persona to ensure unique names
+    const nameSeed = seed * 7 + i * 13 + p.role.length;
+    const lastSeed = seed * 11 + i * 17 + (p.requiredSkills.length * 3);
+    return {
+      name: `${pick(FIRST_NAMES, nameSeed)} ${pick(LAST_INITIALS, lastSeed)}`,
+      headline: `${p.role} · ${p.requiredSkills[0]}`,
+      whyMatch: p.rationale,
+      expertise: p.requiredSkills.slice(0, 3),
+    };
+  });
   while (previewCandidates.length < 3) {
     const i = previewCandidates.length;
+    const fillSeed = seed * 23 + i * 31;
     previewCandidates.push({
-      name: `${pick(FIRST_NAMES, seed + i * 7)} ${pick(LAST_INITIALS, seed + i)}`,
-      headline: `Founding ${pick(["Engineer", "Designer", "Operator"], seed + i)} · early-stage`,
+      name: `${pick(FIRST_NAMES, fillSeed)} ${pick(LAST_INITIALS, fillSeed + 7)}`,
+      headline: `Founding ${pick(["Engineer", "Designer", "Operator", "Strategist", "Scientist"], fillSeed)} · early-stage`,
       whyMatch: "Complementary skills to round out the founding team.",
       expertise: ["Startups", "0→1 building", "Ownership"],
     });
