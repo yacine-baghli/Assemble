@@ -88,18 +88,153 @@ export type PipelineResult = {
 export async function runPipeline(
   idea: string,
   revealBestFit = true,
+  notes: string[] = [],
 ): Promise<PipelineResult> {
   if (convexEnabled) {
     const ref = makeFunctionReference<"action">("scout:runFullPipeline");
-    return (await getClient().action(ref, { idea, revealBestFit })) as PipelineResult;
+    return (await getClient().action(ref, {
+      idea,
+      revealBestFit,
+      notes,
+    })) as PipelineResult;
   }
   const res = await fetch("/api/demo/pipeline", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idea, revealBestFit }),
+    body: JSON.stringify({ idea, revealBestFit, notes }),
   });
   if (!res.ok) throw new Error(`Pipeline failed (${res.status})`);
   return (await res.json()) as PipelineResult;
+}
+
+// ── Payments / unlock (Phase 4) ──────────────────────────────────────
+export async function loadProjectResult(
+  projectId: string,
+): Promise<PipelineResult | null> {
+  if (!convexEnabled || projectId.startsWith("demo-")) return null;
+  const ref = makeFunctionReference<"query">("pipeline:getProjectResult");
+  return (await getClient().query(ref, { projectId })) as PipelineResult | null;
+}
+
+export async function createCheckout(
+  projectId: string,
+  returnUrl: string,
+): Promise<{ url: string | null; reason?: string }> {
+  if (!convexEnabled || projectId.startsWith("demo-")) return { url: null };
+  const ref = makeFunctionReference<"action">("payments:createCheckout");
+  return (await getClient().action(ref, { projectId, returnUrl })) as {
+    url: string | null;
+    reason?: string;
+  };
+}
+
+export async function unlockProject(
+  projectId: string,
+  simulated: boolean,
+): Promise<{ ok: boolean }> {
+  if (!convexEnabled || projectId.startsWith("demo-")) return { ok: false };
+  const ref = makeFunctionReference<"action">("payments:unlock");
+  return (await getClient().action(ref, { projectId, simulated })) as {
+    ok: boolean;
+  };
+}
+
+// ── Voice (Phase 2) ──────────────────────────────────────────────────
+export type Capabilities = {
+  openai: boolean;
+  linkup: boolean;
+  elevenlabsStt: boolean;
+  elevenlabsTts: boolean;
+  resend: boolean;
+  dodo: boolean;
+};
+
+const NO_CAPS: Capabilities = {
+  openai: false,
+  linkup: false,
+  elevenlabsStt: false,
+  elevenlabsTts: false,
+  resend: false,
+  dodo: false,
+};
+
+export async function getCapabilities(): Promise<Capabilities> {
+  if (!convexEnabled) return NO_CAPS;
+  try {
+    const ref = makeFunctionReference<"query">("config:capabilities");
+    return (await getClient().query(ref, {})) as Capabilities;
+  } catch {
+    return NO_CAPS;
+  }
+}
+
+export async function transcribeAudio(
+  audioBase64: string,
+  mimeType: string,
+): Promise<{ text: string; ok: boolean }> {
+  if (!convexEnabled) return { text: "", ok: false };
+  const ref = makeFunctionReference<"action">("voice:transcribe");
+  return (await getClient().action(ref, { audioBase64, mimeType })) as {
+    text: string;
+    ok: boolean;
+  };
+}
+
+export async function synthesizeSpeech(
+  text: string,
+): Promise<{ audioBase64: string; mime: string; ok: boolean }> {
+  if (!convexEnabled) return { audioBase64: "", mime: "audio/mpeg", ok: false };
+  const ref = makeFunctionReference<"action">("voice:speak");
+  return (await getClient().action(ref, { text })) as {
+    audioBase64: string;
+    mime: string;
+    ok: boolean;
+  };
+}
+
+// ── Outreach (Phase 3) ───────────────────────────────────────────────
+export type OutreachContext = {
+  candidateName: string;
+  candidateHeadline: string;
+  whyMatch: string;
+  personaRole: string;
+  ideaText: string;
+  domains: string[];
+  senderName?: string;
+  channel: "email" | "linkedin";
+};
+
+export type OutreachDraft = { subject: string; body: string; demoMode: boolean };
+
+export async function draftOutreach(
+  context: OutreachContext,
+): Promise<OutreachDraft> {
+  if (convexEnabled) {
+    const ref = makeFunctionReference<"action">("outreach:draft");
+    return (await getClient().action(ref, { context })) as OutreachDraft;
+  }
+  const res = await fetch("/api/demo/outreach/draft", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context }),
+  });
+  if (!res.ok) throw new Error(`Draft failed (${res.status})`);
+  return (await res.json()) as OutreachDraft;
+}
+
+export async function sendOutreachEmail(args: {
+  toEmail: string;
+  subject: string;
+  body: string;
+  fromName?: string;
+}): Promise<{ ok: boolean; reason?: string; id?: string }> {
+  if (!convexEnabled) return { ok: false, reason: "no_backend" };
+  const ref = makeFunctionReference<"action">("outreach:sendEmail");
+  return (await getClient().action(ref, args)) as {
+    ok: boolean;
+    reason?: string;
+    id?: string;
+  };
 }
 
 // ── Observability (Phase 5) ──────────────────────────────────────────

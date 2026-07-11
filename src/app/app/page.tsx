@@ -1,15 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   convexEnabled,
+  createCheckout,
+  getCapabilities,
+  loadProjectResult,
   runPipeline,
+  unlockProject,
   type Candidate,
+  type Capabilities,
   type PipelineResult,
 } from "@/lib/backend";
+import VoiceMic from "@/components/VoiceMic";
+import OutreachPanel from "@/components/OutreachPanel";
+import { speak, stopSpeaking, supportsBrowserTTS } from "@/lib/voice";
 
 const PHASES = ["Strategy", "Scouting", "Ranking"];
+
+const NO_CAPS: Capabilities = {
+  openai: false,
+  linkup: false,
+  elevenlabsStt: false,
+  elevenlabsTts: false,
+  resend: false,
+  dodo: false,
+};
 
 export default function AppPage() {
   const [idea, setIdea] = useState("");
@@ -17,6 +34,42 @@ export default function AppPage() {
   const [phase, setPhase] = useState(0);
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [caps, setCaps] = useState<Capabilities>(NO_CAPS);
+  const [prefs, setPrefs] = useState("");
+
+  useEffect(() => {
+    getCapabilities().then(setCaps).catch(() => {});
+    // Memory: load remembered founder preferences.
+    try {
+      setPrefs(localStorage.getItem("assemble:prefs") ?? "");
+    } catch {}
+  }, []);
+
+  function savePrefs(v: string) {
+    setPrefs(v);
+    try {
+      localStorage.setItem("assemble:prefs", v);
+    } catch {}
+  }
+
+  const notes = () =>
+    prefs
+      .split(/[\n;]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  // Handle return from a Dodo checkout: ?unlocked=<projectId>.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get("unlocked");
+    if (!pid) return;
+    (async () => {
+      await unlockProject(pid, false).catch(() => {});
+      const fresh = await loadProjectResult(pid).catch(() => null);
+      if (fresh) setResult(fresh);
+      window.history.replaceState({}, "", "/app");
+    })();
+  }, []);
 
   async function run() {
     if (idea.trim().length < 8) {
@@ -33,7 +86,8 @@ export default function AppPage() {
       1400,
     );
     try {
-      const r = await runPipeline(idea, true);
+      // Freemium: best-fit starts locked; user unlocks the #1 via Dodo.
+      const r = await runPipeline(idea, false, notes());
       setResult(r);
     } catch (e) {
       setError((e as Error).message || "Pipeline failed.");
@@ -78,7 +132,10 @@ export default function AppPage() {
           }}
         />
         <div className="flex items-center justify-between px-2 pb-1">
-          <span className="text-xs text-[var(--muted)]">⌘/Ctrl + Enter</span>
+          <div className="flex items-center gap-3">
+            <VoiceMic caps={caps} onText={(t) => setIdea(t)} onPartial={(t) => setIdea(t)} />
+            <span className="text-xs text-[var(--muted)]">⌘/Ctrl + Enter</span>
+          </div>
           <button
             onClick={run}
             disabled={loading}
@@ -90,9 +147,32 @@ export default function AppPage() {
       </div>
       {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
 
+      <details className="mt-3">
+        <summary className="cursor-pointer text-xs text-[var(--muted)] hover:text-[var(--fg)]">
+          ⚙ preferences the agents remember
+        </summary>
+        <input
+          value={prefs}
+          onChange={(e) => savePrefs(e.target.value)}
+          placeholder="e.g. prefer technical co-founders in Europe; avoid agencies"
+          className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-2)] px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]"
+        />
+        <p className="mt-1 text-[11px] text-[var(--muted)]">
+          Saved on this device and fed into every run — the assistant gets
+          smarter about what you want.
+        </p>
+      </details>
+
       {loading && <PhaseTracker phase={phase} />}
 
-      {result && <Results result={result} />}
+      {result && (
+        <Results
+          result={result}
+          caps={caps}
+          ideaText={idea}
+          onUpdate={setResult}
+        />
+      )}
     </main>
   );
 }
@@ -136,12 +216,86 @@ function PhaseTracker({ phase }: { phase: number }) {
   );
 }
 
-function Results({ result }: { result: PipelineResult }) {
+function buildSpokenSummary(result: PipelineResult): string {
+  const roles = result.personas.map((p) => p.role);
+  const best = result.candidates.find((c) => c.isBestFit && !c.locked);
+  const parts: string[] = [];
+  parts.push(
+    `Here's what I found. Your idea spans ${result.domains.slice(0, 2).join(" and ")}.`,
+  );
+  parts.push(
+    `You're missing ${roles.length} key ${roles.length === 1 ? "role" : "roles"}: ${roles.join(", ")}.`,
+  );
+  if (best) parts.push(`Your strongest match is ${best.name}. ${best.whyMatch}`);
+  if (result.clarifyingQuestions.length > 0) {
+    parts.push(`One question before we go deeper: ${result.clarifyingQuestions[0]}`);
+  }
+  return parts.join(" ");
+}
+
+function Results({
+  result,
+  caps,
+  ideaText,
+  onUpdate,
+}: {
+  result: PipelineResult;
+  caps: Capabilities;
+  ideaText: string;
+  onUpdate: (r: PipelineResult) => void;
+}) {
+  const [speaking, setSpeaking] = useState(false);
+  const [outreachFor, setOutreachFor] = useState<Candidate | null>(null);
+  const lockedBestFit = result.candidates.find((c) => c.isBestFit && c.locked);
   const byPersona = new Map<string, Candidate[]>();
   for (const c of result.candidates) {
     const arr = byPersona.get(c.personaRole) ?? [];
     arr.push(c);
     byPersona.set(c.personaRole, arr);
+  }
+  const canSpeak = caps.elevenlabsTts || supportsBrowserTTS();
+
+  async function toggleSpeak() {
+    if (speaking) {
+      stopSpeaking();
+      setSpeaking(false);
+      return;
+    }
+    setSpeaking(true);
+    await speak(buildSpokenSummary(result), caps);
+    // Best-effort reset; browser TTS has no reliable single-shot end here.
+    setTimeout(() => setSpeaking(false), 1500);
+  }
+
+  const [unlocking, setUnlocking] = useState(false);
+  async function unlock() {
+    setUnlocking(true);
+    try {
+      const demo = result.demoMode || result.projectId.startsWith("demo-");
+      // Live path: real Dodo checkout redirect.
+      if (!demo && caps.dodo) {
+        const returnUrl = `${window.location.origin}/app?unlocked=${result.projectId}`;
+        const { url } = await createCheckout(result.projectId, returnUrl);
+        if (url) {
+          window.location.href = url;
+          return;
+        }
+      }
+      // Demo / no-Dodo path: simulated unlock (clearly labeled in the UI).
+      if (!demo) {
+        await unlockProject(result.projectId, true).catch(() => {});
+        const fresh = await loadProjectResult(result.projectId).catch(() => null);
+        if (fresh) {
+          onUpdate(fresh);
+          return;
+        }
+      }
+      // Pure demo mode: deterministic re-run reveals the same best-fit.
+      const revealed = await runPipeline(ideaText, true);
+      onUpdate(revealed);
+    } finally {
+      setUnlocking(false);
+    }
   }
 
   return (
@@ -150,6 +304,14 @@ function Results({ result }: { result: PipelineResult }) {
         <span className="chip px-3 py-1">
           {result.usedLinkup ? "🔗 Linkup live" : "demo sourcing"}
         </span>
+        {canSpeak && (
+          <button
+            onClick={toggleSpeak}
+            className="chip px-3 py-1 hover:text-[var(--fg)]"
+          >
+            {speaking ? "⏹ stop" : `🔊 hear the summary${caps.elevenlabsTts ? " (ElevenLabs)" : ""}`}
+          </button>
+        )}
         {result.demoMode && (
           <span className="chip px-3 py-1 text-[var(--muted)]">
             demo mode — add OpenAI + Linkup keys for live agents
@@ -161,6 +323,29 @@ function Results({ result }: { result: PipelineResult }) {
           </Link>
         )}
       </div>
+
+      {lockedBestFit && (
+        <div className="card flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div>
+            <p className="font-semibold">🔓 Your #1 best-fit co-founder is locked</p>
+            <p className="text-sm text-[var(--muted)]">
+              The single strongest match ({Math.round(lockedBestFit.confidence * 100)}% ·{" "}
+              {lockedBestFit.personaRole}) — unlock to see who it is and reach out.
+            </p>
+          </div>
+          <button
+            onClick={unlock}
+            disabled={unlocking}
+            className="btn-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold"
+          >
+            {unlocking
+              ? "Unlocking…"
+              : caps.dodo && !result.demoMode
+                ? "Unlock — pay with Dodo"
+                : "Unlock (simulated)"}
+          </button>
+        </div>
+      )}
 
       <Decomposition result={result} />
 
@@ -181,7 +366,7 @@ function Results({ result }: { result: PipelineResult }) {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {cands.map((c, i) => (
-                <CandidateCard key={i} c={c} />
+                <CandidateCard key={i} c={c} onOutreach={() => setOutreachFor(c)} />
               ))}
               {cands.length === 0 && (
                 <p className="text-sm text-[var(--muted)]">No candidates yet.</p>
@@ -190,6 +375,16 @@ function Results({ result }: { result: PipelineResult }) {
           </section>
         );
       })}
+
+      {outreachFor && (
+        <OutreachPanel
+          candidate={outreachFor}
+          ideaText={ideaText}
+          domains={result.domains}
+          caps={caps}
+          onClose={() => setOutreachFor(null)}
+        />
+      )}
     </div>
   );
 }
@@ -253,7 +448,7 @@ function Block({
   );
 }
 
-function CandidateCard({ c }: { c: Candidate }) {
+function CandidateCard({ c, onOutreach }: { c: Candidate; onOutreach: () => void }) {
   const [decision, setDecision] = useState<"accepted" | "rejected" | null>(null);
   const pct = Math.round(c.confidence * 100);
   return (
@@ -315,6 +510,14 @@ function CandidateCard({ c }: { c: Candidate }) {
             </a>
           ))}
           {c.locked && <span className="text-xs text-[var(--muted)]">🔒 gated</span>}
+          {!c.locked && (
+            <button
+              onClick={onOutreach}
+              className="text-xs text-[var(--accent-2)] hover:underline"
+            >
+              ✉ draft outreach
+            </button>
+          )}
         </div>
         <div className="flex gap-1.5">
           <button

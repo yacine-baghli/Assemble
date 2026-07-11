@@ -127,6 +127,95 @@ export const getBundle = query({
   },
 });
 
+// Un-gate the best-fit after a successful payment (Dodo) or a demo unlock.
+export const revealBestFit = internalMutation({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const candidates = await ctx.db
+      .query("candidates")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+    for (const c of candidates) {
+      if (c.gated) await ctx.db.patch(c._id, { gated: false });
+    }
+    return { ok: true };
+  },
+});
+
+export const recordPayment = internalMutation({
+  args: {
+    projectId: v.id("projects"),
+    amount: v.number(),
+    status: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    await ctx.db.insert("payments", {
+      projectId: args.projectId,
+      userId: project?.userId,
+      provider: "dodo",
+      amount: args.amount,
+      status: args.status,
+      at: Date.now(),
+    });
+    if (project?.userId) {
+      const usage = await ctx.db
+        .query("usage")
+        .withIndex("by_user", (q) => q.eq("userId", project.userId!))
+        .first();
+      if (usage) await ctx.db.patch(usage._id, { revealedBestFit: true });
+    }
+  },
+});
+
+// Full PipelineResult-shaped payload for a stored project (used after a
+// payment redirect to rebuild the view with the best-fit revealed).
+export const getProjectResult = query({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) return null;
+    const personas = await ctx.db
+      .query("personas")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+    const candidates = await ctx.db
+      .query("candidates")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+    const publicCandidates = candidates
+      .sort((a, b) => b.confidence - a.confidence)
+      .map((c) => ({
+        name: c.gated ? "🔒 Unlock to reveal" : c.name,
+        headline: c.headline,
+        location: c.location,
+        whyMatch: c.whyMatch,
+        expertise: c.expertise,
+        profileUrls: c.gated ? [] : c.profileUrls,
+        confidence: c.confidence,
+        isBestFit: c.isBestFit,
+        personaRole: c.personaRole,
+        locked: c.gated,
+      }));
+    return {
+      projectId: args.projectId,
+      demoMode: project.demoMode ?? false,
+      usedLinkup: false,
+      domains: project.domains,
+      missingExpertise: project.missingExpertise,
+      challenges: project.challenges,
+      risks: project.risks,
+      clarifyingQuestions: project.clarifyingQuestions ?? [],
+      personas: personas.map((p) => ({
+        role: p.role,
+        requiredSkills: p.requiredSkills,
+        rationale: p.rationale,
+      })),
+      candidates: publicCandidates,
+    };
+  },
+});
+
 export const listProjects = query({
   args: {},
   handler: async (ctx) => {

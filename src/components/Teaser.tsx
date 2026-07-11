@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   captureEmail,
   convexEnabled,
+  getCapabilities,
   teaserPreview,
+  type Capabilities,
   type TeaserResult,
 } from "@/lib/backend";
+import VoiceMic from "@/components/VoiceMic";
+
+const NO_CAPS: Capabilities = {
+  openai: false,
+  linkup: false,
+  elevenlabsStt: false,
+  elevenlabsTts: false,
+  resend: false,
+  dodo: false,
+};
 
 const EXAMPLES = [
   "A device that grows human neurons on microfluidic chips to test drugs without animals",
@@ -23,6 +35,11 @@ export default function Teaser() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [caps, setCaps] = useState<Capabilities>(NO_CAPS);
+
+  useEffect(() => {
+    getCapabilities().then(setCaps).catch(() => {});
+  }, []);
 
   async function onAssemble() {
     if (idea.trim().length < 8) {
@@ -77,9 +94,18 @@ export default function Teaser() {
               }}
             />
             <div className="flex items-center justify-between px-2 pb-1">
-              <span className="text-xs text-[var(--muted)]">
-                {stage === "loading" ? "Decomposing your idea…" : "⌘/Ctrl + Enter"}
-              </span>
+              <div className="flex items-center gap-3">
+                {stage === "idea" && (
+                  <VoiceMic
+                    caps={caps}
+                    onText={(t) => setIdea(t)}
+                    onPartial={(t) => setIdea(t)}
+                  />
+                )}
+                <span className="text-xs text-[var(--muted)]">
+                  {stage === "loading" ? "Decomposing your idea…" : "⌘/Ctrl + Enter"}
+                </span>
+              </div>
               <button
                 onClick={onAssemble}
                 disabled={stage === "loading"}

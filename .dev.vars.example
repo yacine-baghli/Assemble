@@ -1,0 +1,11 @@
+# Wrangler reads THIS file for local `opennextjs-cloudflare preview` (NOT .env.local).
+# Copy to `.dev.vars` and fill in. Never commit `.dev.vars`.
+#
+# Build-time public vars (baked into the Worker):
+NEXT_PUBLIC_CONVEX_URL=
+NEXT_PUBLIC_APP_URL=http://localhost:8787
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=
+
+# Heavy secrets normally live on Convex (npx convex env set ...), because the
+# heavy logic runs in Convex actions — not in the Worker. Only add a secret
+# here if you move that call into a Next route handler.

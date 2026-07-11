@@ -57,10 +57,20 @@ async function linkupSearch(persona: Persona, domains: string[]): Promise<RawCan
 // Full agency pipeline: idea → strategy → parallel scouts → ranking → persist.
 // Returns the assembled bundle so the frontend needs no follow-up query.
 export const runFullPipeline = action({
-  args: { idea: v.string(), revealBestFit: v.optional(v.boolean()) },
+  args: {
+    idea: v.string(),
+    revealBestFit: v.optional(v.boolean()),
+    notes: v.optional(v.array(v.string())),
+  },
   handler: async (ctx, args) => {
     const idea = args.idea.trim().slice(0, 2000);
     if (idea.length < 8) throw new Error("Idea is too short");
+
+    // Memory: founder preferences from earlier sessions bias the agents.
+    const notes = (args.notes ?? []).filter((n) => n && n.trim()).slice(0, 8);
+    const notePreamble = notes.length
+      ? `Founder preferences to respect (from memory): ${notes.join("; ")}\n\n`
+      : "";
 
     const runId = await ctx.runMutation(internal.observability.startRun, {
       label: "app:full-pipeline",
@@ -85,7 +95,7 @@ export const runFullPipeline = action({
         } else {
           const call = await chatJson({
             system: STRATEGY_SYSTEM_PROMPT,
-            user: buildStrategyUserPrompt(idea),
+            user: notePreamble + buildStrategyUserPrompt(idea),
           });
           strategy = coerceStrategyResult(call.json, idea);
           tokens = call.tokens;
@@ -177,12 +187,14 @@ export const runFullPipeline = action({
         } else {
           const call = await chatJson({
             system: RANKING_SYSTEM_PROMPT,
-            user: buildRankingUserPrompt({
-              domains: strategy.domains,
-              missingExpertise: strategy.missingExpertise,
-              personas,
-              raw,
-            }),
+            user:
+              notePreamble +
+              buildRankingUserPrompt({
+                domains: strategy.domains,
+                missingExpertise: strategy.missingExpertise,
+                personas,
+                raw,
+              }),
             temperature: 0.2,
           });
           ranked = coerceRanked(call.json, fallback);
