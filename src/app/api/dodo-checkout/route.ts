@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 async function getEnv(key: string): Promise<string> {
-  // Try Cloudflare Workers bindings first, then process.env
   try {
     const { env } = await getCloudflareContext();
     const val = (env as Record<string, string>)?.[key];
@@ -19,7 +18,7 @@ function dodoBase(mode: string): string {
     : "https://test.dodopayments.com";
 }
 
-// Creates a Dodo payment and returns the payment link URL.
+// Creates a Dodo subscription (recurring product) and returns the payment link.
 export async function POST(req: Request) {
   const { returnUrl } = (await req.json().catch(() => ({}))) as {
     returnUrl?: string;
@@ -37,7 +36,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const res = await fetch(`${dodoBase(mode)}/payments`, {
+    // Product is recurring → use /subscriptions endpoint
+    const res = await fetch(`${dodoBase(mode)}/subscriptions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -56,7 +56,8 @@ export async function POST(req: Request) {
           name: "Assemble Demo User",
         },
         payment_link: true,
-        product_cart: [{ product_id: productId, quantity: 1 }],
+        product_id: productId,
+        quantity: 1,
         return_url: returnUrl || "https://assemble.yacine-baghli.workers.dev/",
       }),
     });

@@ -34,7 +34,7 @@ export default function Home() {
       <main className="flex flex-1 flex-col items-center px-5 py-14 sm:py-20">
         <header className="mb-10 flex w-full max-w-2xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="var(--fg)"/></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="var(--fg)"/><text x="12" y="17" textAnchor="middle" fill="var(--bg)" fontSize="14" fontWeight="700" fontFamily="Inter, sans-serif">A</text></svg>
             <span className="text-sm font-semibold tracking-tight">Assemble</span>
           </div>
           <div className="flex items-center gap-3">
