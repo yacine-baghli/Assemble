@@ -56,8 +56,7 @@ function readProfile() {
     company: clean(data.get("company"), 100),
     location: clean(data.get("location"), 100),
     focus: clean(data.get("focus"), 160),
-    profileContext: clean(data.get("profileContext"), 600),
-    candidatePitch: clean(data.get("candidatePitch"), 600)
+    profileContext: clean(data.get("profileContext"), 600)
   };
 }
 
@@ -83,7 +82,6 @@ function updateProfileSummary() {
   setText("summary-name", profile.name);
   setText("summary-role", [profile.role, profile.company].filter(Boolean).join(" at "));
   setText("summary-focus", profile.focus);
-  setText("summary-pitch", profile.candidatePitch);
 }
 
 function setCallState(state, title, detail) {
