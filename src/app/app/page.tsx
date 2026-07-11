@@ -327,10 +327,14 @@ function Results({
       {lockedBestFit && (
         <div className="card flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
           <div>
-            <p className="font-semibold">🔓 Your #1 best-fit co-founder is locked</p>
+            <p className="font-semibold">
+              🔓 Go Pro — <span className="gradient-text">$14.99/mo</span>
+            </p>
             <p className="text-sm text-[var(--muted)]">
-              The single strongest match ({Math.round(lockedBestFit.confidence * 100)}% ·{" "}
-              {lockedBestFit.personaRole}) — unlock to see who it is and reach out.
+              Unlock <strong>5 profiles per idea</strong> plus your{" "}
+              <strong>#1 best-fit co-founder</strong> (
+              {Math.round(lockedBestFit.confidence * 100)}% · {lockedBestFit.personaRole})
+              — see who they are and reach out.
             </p>
           </div>
           <button
@@ -339,9 +343,9 @@ function Results({
             className="btn-accent shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold"
           >
             {unlocking
-              ? "Unlocking…"
+              ? "Starting…"
               : caps.dodo && !result.demoMode
-                ? "Unlock — pay with Dodo"
+                ? "Subscribe — $14.99/mo"
                 : "Unlock (simulated)"}
           </button>
         </div>
