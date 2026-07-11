@@ -62,7 +62,32 @@ npx convex env set DODO_PAYMENTS_API_KEY ...
 npx convex env set DODO_WEBHOOK_SECRET ...
 ```
 
+Optional Convex env vars:
+
+```bash
+npx convex env set OPENAI_MODEL gpt-4o-mini        # default
+npx convex env set ELEVENLABS_VOICE_ID <voice_id>  # default: Rachel
+npx convex env set RESEND_FROM "Assemble <you@yourdomain>"
+npx convex env set DODO_MODE test                  # test | live
+npx convex env set DODO_PRODUCT_ID <product_id>    # required for real checkout
+```
+
+**Dodo webhook** (production reveal path): point your Dodo webhook to
+`<your-convex-url>/dodo-webhook` (Convex serves `convex/http.ts`). The best-fit
+is revealed on the verified `succeeded` event.
+
 Then `npm run dev` — the app now uses live Convex + OpenAI.
+
+### What works without which key
+
+| Feature | No keys (demo) | With key |
+|---|---|---|
+| Idea → team decomposition | deterministic | OpenAI (`OPENAI_API_KEY`) |
+| People sourcing | honest search links | Linkup (`LINKUP_API_KEY`) |
+| Voice in/out | browser Web Speech | ElevenLabs (`ELEVENLABS_API_KEY`) |
+| Outreach send | copy only | Resend (`RESEND_API_KEY`) |
+| Unlock best-fit | simulated | Dodo (`DODO_PAYMENTS_API_KEY` + `DODO_PRODUCT_ID`) |
+| `/runs` observability | needs Convex | Convex |
 
 ## Deploy to Cloudflare
 
