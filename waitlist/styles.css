@@ -127,6 +127,18 @@ input {
 
 .nav-actions {
   justify-self: end;
+  gap: 14px;
+}
+
+.nav-demo-link {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.nav-demo-link:hover {
+  color: var(--muted);
 }
 
 .status-label,
@@ -243,31 +255,6 @@ p {
   color: var(--muted);
   font-size: 18px;
   text-wrap: balance;
-}
-
-.hero-actions {
-  display: flex;
-  justify-content: center;
-  margin: 0 auto 28px;
-}
-
-.demo-cta {
-  min-height: 46px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 0 17px;
-  border-radius: 4px;
-  background: var(--text);
-  color: var(--canvas);
-  font-size: 14px;
-  font-weight: 650;
-  text-decoration: none;
-}
-
-.demo-cta:hover {
-  background: color-mix(in srgb, var(--text) 84%, var(--canvas));
 }
 
 .signup {
@@ -639,10 +626,6 @@ p {
     margin: 12px auto 16px;
     font-size: 15px;
     line-height: 1.45;
-  }
-
-  .hero-actions {
-    margin-bottom: 20px;
   }
 
   .signup {
